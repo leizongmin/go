@@ -56,7 +56,7 @@ const CUSTOM = "CUSTOM"
 const INSERT_OR_UPDATE = "INSERT_OR_UPDATE"
 
 func Table(tableName string) *QueryBuilder {
-	return &QueryBuilder{tableName: tableName}
+	return newEmptyQuery().Table(tableName)
 }
 
 func newEmptyQuery() *QueryBuilder {
@@ -95,8 +95,12 @@ func (q *QueryBuilder) Location(loc *time.Location) *QueryBuilder {
 }
 
 func (q *QueryBuilder) Format(query string, args ...Value) string {
+	if len(args) < 1 {
+		return query
+	}
 	ret, err := InterpolateParams(query, args, nil)
 	if err != nil {
+		panic(err)
 		log.Println(err)
 		return ""
 	}
@@ -143,6 +147,16 @@ func (q *QueryBuilder) Delete() *QueryBuilder {
 
 func (q *QueryBuilder) Insert(row interface{}) *QueryBuilder {
 	q.queryType = INSERT
+	if m, ok := row.(map[string]interface{}); ok {
+		var fields []string
+		var values []string
+		for k, v := range m {
+			fields = append(fields, k)
+			values = append(values, q.Format("?", v))
+		}
+		q.insertRows = 1
+		q.insert = fmt.Sprintf("(%s) VALUES (%s)", strings.Join(fields, ", "), strings.Join(values, ", "))
+	}
 	return q
 }
 
@@ -212,7 +226,7 @@ func (q *QueryBuilder) Where(query string, args ...Value) *QueryBuilder {
 }
 
 func (q *QueryBuilder) And(query string, args ...Value) *QueryBuilder {
-	q.conditions = append(q.conditions, q.Format(query, args))
+	q.conditions = append(q.conditions, q.Format(query, args...))
 	return q
 }
 
@@ -267,10 +281,10 @@ func (q *QueryBuilder) Build() string {
 	case SELECT_DISTINCT:
 		return q.buildSelect(where)
 	case UPDATE:
-		return fmt.Sprintf("INSERT INTO %s %s", q.tableNameEscaped, strings.Join(q.update, ", "))
-	case INSERT:
 		tail := strings.Join([]string{where, q.orderBy, q.limit}, " ")
-		return fmt.Sprintf("UPDATE %s SET %s %s", q.tableNameEscaped, q.insert, tail)
+		return fmt.Sprintf("UPDATE %s SET %s %s", q.tableNameEscaped, strings.Join(q.update, ", "), tail)
+	case INSERT:
+		return fmt.Sprintf("INSERT INTO %s %s", q.tableNameEscaped, q.insert)
 	case INSERT_OR_UPDATE:
 		return fmt.Sprintf("INSERT INTO %s %s ON DUPLICATE KEY UPDATE %s", q.tableNameEscaped, q.insert, strings.Join(q.update, ", "))
 	case DELETE:
@@ -278,9 +292,34 @@ func (q *QueryBuilder) Build() string {
 		return fmt.Sprintf("DELETE FROM %s %s", q.tableNameEscaped, tail)
 	case CUSTOM:
 		return q.Format(q.sqlTpl, q.sqlValues...)
+	default:
+		return ""
 	}
 }
 
 func (q *QueryBuilder) buildSelect(where string) string {
-
+	var join []string
+	if len(q.joinTables) > 0 {
+		for _, item := range q.joinTables {
+			str := item.joinType + " " + item.table
+			a, ok := q.mapTableToAlias[item.table]
+			if ok {
+				str += " AS " + a
+			} else {
+				a = item.table
+			}
+			if item.on != "" {
+				str += " ON " + item.on
+			}
+			if len(item.fields) > 0 {
+				q.fields = append(q.fields, item.fields...)
+			}
+			join = append(join, str)
+		}
+	}
+	if len(q.fields) < 1 {
+		q.fields = append(q.fields, "*")
+	}
+	tail := strings.Join([]string{where, q.orderBy, q.limit}, " ")
+	return fmt.Sprintf("%s %s FROM %s %s", q.queryType, strings.Join(q.fields, ", "), q.tableNameEscaped, tail)
 }
