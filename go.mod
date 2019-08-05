@@ -3,6 +3,8 @@ module github.com/leizongmin/go-common-libs
 go 1.12
 
 require (
-	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
+	github.com/go-sql-driver/mysql v1.4.1
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/stretchr/testify v1.3.0
+	google.golang.org/appengine v1.6.1 // indirect
 )
