@@ -3,6 +3,7 @@ package sqlBuilder
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -43,6 +44,8 @@ type joinTableItem struct {
 	alias    string
 }
 
+type Row = map[string]interface{}
+
 const LEFT_JOIN = "LEFT JOIN"
 const JOIN = "JOIN"
 const RIGHT_JOIN = "RIGHT JOIN"
@@ -52,35 +55,28 @@ const SELECT_DISTINCT = "SELECT DISTINCT"
 const UPDATE = "UPDATE"
 const INSERT = "INSERT"
 const DELETE = "DELETE"
-const CUSTOM = "CUSTOM"
 const INSERT_OR_UPDATE = "INSERT_OR_UPDATE"
+
+var defaultLocation = time.Local
+
+func SetDefaultLocation(loc *time.Location) {
+	if loc != nil {
+		defaultLocation = loc
+	}
+}
+
+func GetDefaultLocation() *time.Location {
+	return defaultLocation
+}
 
 func Table(tableName string) *QueryBuilder {
 	return newEmptyQuery().Table(tableName)
 }
 
 func newEmptyQuery() *QueryBuilder {
-	return &QueryBuilder{}
-}
-
-func Update() *QueryBuilder {
-	return newEmptyQuery().Update()
-}
-
-func Select(fields ...string) *QueryBuilder {
-	return newEmptyQuery().Select(fields...)
-}
-
-func SelectDistinct(fields ...string) *QueryBuilder {
-	return newEmptyQuery().SelectDistinct(fields...)
-}
-
-func Insert(row interface{}) *QueryBuilder {
-	return newEmptyQuery().Insert(row)
-}
-
-func Delete() *QueryBuilder {
-	return newEmptyQuery().Delete()
+	return &QueryBuilder{
+		loc: defaultLocation,
+	}
 }
 
 func (q *QueryBuilder) Clone() (*QueryBuilder, error) {
@@ -98,13 +94,12 @@ func (q *QueryBuilder) Format(query string, args ...Value) string {
 	if len(args) < 1 {
 		return query
 	}
-	ret, err := InterpolateParams(query, args, nil)
+	ret, err := InterpolateParams(query, args, q.loc)
 	if err != nil {
-		panic(err)
 		log.Println(err)
-		return ""
+		return query
 	}
-	return strings.Trim(ret, "")
+	return strings.Trim(ret, " ")
 }
 
 func (q *QueryBuilder) Update() *QueryBuilder {
@@ -134,10 +129,8 @@ func (q *QueryBuilder) SelectDistinct(fields ...string) *QueryBuilder {
 	return q
 }
 
-func (q *QueryBuilder) Count(name string, field string) *QueryBuilder {
-	q.queryType = SELECT
-	q.fields = append(q.fields, "COUNT("+field+") AS "+name)
-	return q
+func (q *QueryBuilder) Count(field string) *QueryBuilder {
+	return q.Select("COUNT(" + field + ") AS `count`")
 }
 
 func (q *QueryBuilder) Delete() *QueryBuilder {
@@ -145,18 +138,44 @@ func (q *QueryBuilder) Delete() *QueryBuilder {
 	return q
 }
 
-func (q *QueryBuilder) Insert(row interface{}) *QueryBuilder {
+func (q *QueryBuilder) Insert(row Row) *QueryBuilder {
 	q.queryType = INSERT
-	if m, ok := row.(map[string]interface{}); ok {
-		var fields []string
-		var values []string
-		for k, v := range m {
-			fields = append(fields, k)
-			values = append(values, q.Format("?", v))
-		}
-		q.insertRows = 1
-		q.insert = fmt.Sprintf("(%s) VALUES (%s)", strings.Join(fields, ", "), strings.Join(values, ", "))
+	var fields []string
+	var values []string
+	for k, _ := range row {
+		fields = append(fields, k)
 	}
+	sort.Strings(fields)
+	for _, k := range fields {
+		values = append(values, q.Format("?", row[k]))
+	}
+	q.insertRows = 1
+	q.insert = fmt.Sprintf("(%s) VALUES (%s)", strings.Join(fields, ", "), strings.Join(values, ", "))
+	return q
+}
+
+func (q *QueryBuilder) InsertMany(rows []Row) *QueryBuilder {
+	if len(rows) < 1 {
+		log.Println("rows number must be greater than 0")
+		return q
+	}
+	q.queryType = INSERT
+	var fields []string
+	row := rows[0]
+	for k, _ := range row {
+		fields = append(fields, k)
+	}
+	sort.Strings(fields)
+	var lines []string
+	for _, row := range rows {
+		var values []string
+		for _, k := range fields {
+			values = append(values, q.Format("?", row[k]))
+		}
+		lines = append(lines, fmt.Sprintf("(%s)", strings.Join(values, ", ")))
+	}
+	q.insertRows = len(rows)
+	q.insert = fmt.Sprintf("(%s) VALUES %s", strings.Join(fields, ", "), strings.Join(lines, ", "))
 	return q
 }
 
@@ -166,15 +185,13 @@ func (q *QueryBuilder) Table(tableName string) *QueryBuilder {
 	return q
 }
 
-func (q *QueryBuilder) Into(tableName string) *QueryBuilder {
-	return q.Table(tableName)
-}
-
-func (q *QueryBuilder) From(tableName string) *QueryBuilder {
-	return q.Table(tableName)
-}
-
 func (q *QueryBuilder) setTableAlias(tableName string, aliasName string) {
+	if q.mapAliasToTable == nil {
+		q.mapAliasToTable = make(map[string]string)
+	}
+	if q.mapTableToAlias == nil {
+		q.mapTableToAlias = make(map[string]string)
+	}
 	q.mapAliasToTable[aliasName] = tableName
 	q.mapTableToAlias[tableName] = aliasName
 }
@@ -203,21 +220,22 @@ func (q *QueryBuilder) As(name string) *QueryBuilder {
 	return q
 }
 
-func (q *QueryBuilder) Join(tableName string, fields []string) *QueryBuilder {
+func (q *QueryBuilder) Join(tableName string, fields ...string) *QueryBuilder {
 	return q.addJoinTable(tableName, JOIN, fields, "")
 }
 
-func (q *QueryBuilder) LeftJoin(tableName string, fields []string) *QueryBuilder {
+func (q *QueryBuilder) LeftJoin(tableName string, fields ...string) *QueryBuilder {
 	return q.addJoinTable(tableName, LEFT_JOIN, fields, "")
 }
 
-func (q *QueryBuilder) RightJoin(tableName string, fields []string) *QueryBuilder {
+func (q *QueryBuilder) RightJoin(tableName string, fields ...string) *QueryBuilder {
 	return q.addJoinTable(tableName, RIGHT_JOIN, fields, "")
 }
 
 func (q *QueryBuilder) On(condition string, args ...Value) *QueryBuilder {
 	last := q.joinTables[len(q.joinTables)-1]
-	last.on = q.Format(condition, args)
+	last.on = q.Format(condition, args...)
+	q.joinTables[len(q.joinTables)-1] = last
 	return q
 }
 
@@ -232,13 +250,6 @@ func (q *QueryBuilder) And(query string, args ...Value) *QueryBuilder {
 
 func (q *QueryBuilder) Set(update string, args ...Value) *QueryBuilder {
 	q.update = append(q.update, q.Format(update, args...))
-	return q
-}
-
-func (q *QueryBuilder) Custom(query string, args ...Value) *QueryBuilder {
-	q.queryType = CUSTOM
-	q.sqlTpl = query
-	q.sqlValues = args
 	return q
 }
 
@@ -275,26 +286,26 @@ func (q *QueryBuilder) Build() string {
 	if len(q.conditions) > 0 {
 		where = "WHERE " + strings.Join(q.conditions, " AND ")
 	}
+	var sql string
 	switch q.queryType {
 	case SELECT:
-		return q.buildSelect(where)
+		sql = q.buildSelect(where)
 	case SELECT_DISTINCT:
-		return q.buildSelect(where)
+		sql = q.buildSelect(where)
 	case UPDATE:
-		tail := strings.Join([]string{where, q.orderBy, q.limit}, " ")
-		return fmt.Sprintf("UPDATE %s SET %s %s", q.tableNameEscaped, strings.Join(q.update, ", "), tail)
+		tail := sqlTailString(where, q.orderBy, q.limit)
+		sql = fmt.Sprintf("UPDATE %s SET %s %s", q.tableNameEscaped, strings.Join(q.update, ", "), tail)
 	case INSERT:
-		return fmt.Sprintf("INSERT INTO %s %s", q.tableNameEscaped, q.insert)
+		sql = fmt.Sprintf("INSERT INTO %s %s", q.tableNameEscaped, q.insert)
 	case INSERT_OR_UPDATE:
-		return fmt.Sprintf("INSERT INTO %s %s ON DUPLICATE KEY UPDATE %s", q.tableNameEscaped, q.insert, strings.Join(q.update, ", "))
+		sql = fmt.Sprintf("INSERT INTO %s %s ON DUPLICATE KEY UPDATE %s", q.tableNameEscaped, q.insert, strings.Join(q.update, ", "))
 	case DELETE:
-		tail := strings.Join([]string{where, q.orderBy, q.limit}, " ")
-		return fmt.Sprintf("DELETE FROM %s %s", q.tableNameEscaped, tail)
-	case CUSTOM:
-		return q.Format(q.sqlTpl, q.sqlValues...)
+		tail := sqlTailString(where, q.orderBy, q.limit)
+		sql = fmt.Sprintf("DELETE FROM %s %s", q.tableNameEscaped, tail)
 	default:
-		return ""
+		sql = ""
 	}
+	return strings.Trim(sql, " ")
 }
 
 func (q *QueryBuilder) buildSelect(where string) string {
@@ -320,6 +331,22 @@ func (q *QueryBuilder) buildSelect(where string) string {
 	if len(q.fields) < 1 {
 		q.fields = append(q.fields, "*")
 	}
-	tail := strings.Join([]string{where, q.orderBy, q.limit}, " ")
-	return fmt.Sprintf("%s %s FROM %s %s", q.queryType, strings.Join(q.fields, ", "), q.tableNameEscaped, tail)
+	tail := sqlTailString(strings.Join(join, " "), where, q.orderBy, q.limit)
+	table := q.tableNameEscaped
+	if q.mapTableToAlias != nil && len(q.mapTableToAlias[q.tableName]) > 0 {
+		table += " AS " + q.mapTableToAlias[q.tableName]
+	}
+	return fmt.Sprintf("%s %s FROM %s %s", q.queryType, strings.Join(q.fields, ", "), table, tail)
+}
+
+func Custom(query string, args ...Value) string {
+	if len(args) < 1 {
+		return strings.Trim(query, " ")
+	}
+	ret, err := InterpolateParams(query, args, defaultLocation)
+	if err != nil {
+		log.Println(err)
+		return query
+	}
+	return strings.Trim(ret, " ")
 }

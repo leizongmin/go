@@ -9,22 +9,67 @@ import (
 
 func TestTable(t *testing.T) {
 	{
+		sql := Custom("SELECT * FROM test WHERE a=? AND b=?", true, "xxx")
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT * FROM test WHERE a=1 AND b='xxx'", sql)
+	}
+	{
 		sql := Table("test").Select("*").Where("a=?", 123).And("b=?", 456).Skip(10).Limit(20).Build()
 		fmt.Println(sql)
-		assert.Equal(t, "SELECT * FROM test WHERE a=123 AND b=456  LIMIT 10,20", sql)
+		assert.Equal(t, "SELECT * FROM test WHERE a=123 AND b=456 LIMIT 10,20", sql)
 	}
 	{
 		sql := Table("test").Select("*").Where("a=?", 123).And("b=?", `'xxx'`).Skip(10).Limit(20).Build()
 		fmt.Println(sql)
-		assert.Equal(t, `SELECT * FROM test WHERE a=123 AND b='''xxx'''  LIMIT 10,20`, sql)
+		assert.Equal(t, `SELECT * FROM test WHERE a=123 AND b='''xxx''' LIMIT 10,20`, sql)
 	}
 	{
-		sql := Table("test").Insert(map[string]interface{}{
+		sql := Table("test").Insert(Row{
 			"a": 123,
 			"b": `'ok'`,
 			"c": true,
 		}).Build()
 		fmt.Println(sql)
-		assert.Equal(t, `INSERT INTO test (b, c, a) VALUES ('''ok''', 1, 123)`, sql)
+		assert.Equal(t, `INSERT INTO test (a, b, c) VALUES (123, '''ok''', 1)`, sql)
+	}
+	{
+		sql := Table("test").InsertMany([]Row{
+			{
+				"a": 123,
+				"b": `'ok'`,
+				"c": true,
+			},
+			{
+				"c": 666,
+				"b": "current_timestamp()",
+			},
+		}).Build()
+		fmt.Println(sql)
+		assert.Equal(t, `INSERT INTO test (a, b, c) VALUES (123, '''ok''', 1), (NULL, 'current_timestamp()', 666)`, sql)
+	}
+	{
+		sql := Table("test").Count("*").Build()
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT COUNT(*) AS `count` FROM test", sql)
+	}
+	{
+		sql := Table("test").Delete().Where("a=?", true).Limit(1).Build()
+		fmt.Println(sql)
+		assert.Equal(t, "DELETE FROM test WHERE a=1 LIMIT 1", sql)
+	}
+	{
+		sql := Table("test").Update().Set("a=?, b=?", 123, 456).Set("c=now()").Where("a=?", 999).Limit(10).Build()
+		fmt.Println(sql)
+		assert.Equal(t, "UPDATE test SET a=123, b=456, c=now() WHERE a=999 LIMIT 10", sql)
+	}
+	{
+		sql := Table("test").Select("a", "b").LeftJoin("test2", "c").Build()
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT a, b, c FROM test LEFT JOIN test2", sql)
+	}
+	{
+		sql := Table("test").Select("a", "b").As("x").LeftJoin("test2", "c").As("y").On("x.a=y.a").RightJoin("test3").As("z").Where("x.a=666").Build()
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT a, b, c FROM test AS x LEFT JOIN test2 AS y ON x.a=y.a RIGHT JOIN test3 AS z WHERE x.a=666", sql)
 	}
 }

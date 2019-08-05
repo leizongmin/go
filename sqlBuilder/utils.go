@@ -286,3 +286,13 @@ func sqlLimitString(offset int, limit int) string {
 	}
 	return fmt.Sprintf("LIMIT %d,18446744073709551615", offset)
 }
+
+func sqlTailString(list ...string) string {
+	var ret string
+	for _, s := range list {
+		if len(s) > 0 {
+			ret += " " + strings.Trim(s, " ")
+		}
+	}
+	return strings.Trim(ret, " ")
+}
