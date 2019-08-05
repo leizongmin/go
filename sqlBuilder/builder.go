@@ -6,8 +6,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/jinzhu/copier"
 )
 
 type QueryBuilder struct {
@@ -21,9 +19,6 @@ type QueryBuilder struct {
 	insert               string
 	insertRows           int
 	delete               string
-	sql                  string
-	sqlTpl               string
-	sqlValues            []Value
 	orderFields          string
 	orderBy              string
 	groupBy              string
@@ -79,10 +74,42 @@ func newEmptyQuery() *QueryBuilder {
 	}
 }
 
-func (q *QueryBuilder) Clone() (*QueryBuilder, error) {
-	ret := newEmptyQuery()
-	err := copier.Copy(ret, q)
-	return ret, err
+func (q *QueryBuilder) Clone() *QueryBuilder {
+	// mapTableToAlias      map[string]string
+	// mapAliasToTable      map[string]string
+	ret := &QueryBuilder{
+		loc:                  q.loc,
+		tableName:            q.tableName,
+		tableNameEscaped:     q.tableNameEscaped,
+		queryType:            q.queryType,
+		insert:               q.insert,
+		insertRows:           q.insertRows,
+		delete:               q.delete,
+		orderFields:          q.orderFields,
+		orderBy:              q.orderBy,
+		groupBy:              q.groupBy,
+		offsetRows:           q.offsetRows,
+		limitRows:            q.limitRows,
+		limit:                q.limit,
+		currentJoinTableName: q.currentJoinTableName,
+	}
+	copy(ret.fields, q.fields)
+	copy(ret.conditions, q.conditions)
+	copy(ret.update, q.update)
+	copy(ret.joinTables, q.joinTables)
+	if q.mapTableToAlias != nil {
+		ret.mapTableToAlias = make(map[string]string)
+		for k, v := range q.mapTableToAlias {
+			ret.mapTableToAlias[k] = v
+		}
+	}
+	if q.mapAliasToTable != nil {
+		ret.mapAliasToTable = make(map[string]string)
+		for k, v := range q.mapAliasToTable {
+			ret.mapAliasToTable[k] = v
+		}
+	}
+	return ret
 }
 
 func (q *QueryBuilder) Location(loc *time.Location) *QueryBuilder {
@@ -260,7 +287,7 @@ func (q *QueryBuilder) OrderBy(tpl string, args ...Value) *QueryBuilder {
 }
 
 func (q *QueryBuilder) GroupBy(tpl string, args ...Value) *QueryBuilder {
-	q.groupBy = "GROUP BY " + q.orderFields
+	q.groupBy = "GROUP BY " + q.Format(tpl, args...)
 	return q
 }
 
@@ -331,7 +358,7 @@ func (q *QueryBuilder) buildSelect(where string) string {
 	if len(q.fields) < 1 {
 		q.fields = append(q.fields, "*")
 	}
-	tail := sqlTailString(strings.Join(join, " "), where, q.orderBy, q.limit)
+	tail := sqlTailString(strings.Join(join, " "), where, q.groupBy, q.orderBy, q.limit)
 	table := q.tableNameEscaped
 	if q.mapTableToAlias != nil && len(q.mapTableToAlias[q.tableName]) > 0 {
 		table += " AS " + q.mapTableToAlias[q.tableName]

@@ -9,9 +9,19 @@ import (
 
 func TestTable(t *testing.T) {
 	{
+		sql := Custom("SELECT * FROM test WHERE a=? AND b=?")
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT * FROM test WHERE a=? AND b=?", sql)
+	}
+	{
 		sql := Custom("SELECT * FROM test WHERE a=? AND b=?", true, "xxx")
 		fmt.Println(sql)
 		assert.Equal(t, "SELECT * FROM test WHERE a=1 AND b='xxx'", sql)
+	}
+	{
+		sql := Table("test").Select().Where("a=?", 123).And("b=?", 456).Skip(10).Limit(20).Build()
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT * FROM test WHERE a=123 AND b=456 LIMIT 10,20", sql)
 	}
 	{
 		sql := Table("test").Select("*").Where("a=?", 123).And("b=?", 456).Skip(10).Limit(20).Build()
@@ -48,6 +58,15 @@ func TestTable(t *testing.T) {
 		assert.Equal(t, `INSERT INTO test (a, b, c) VALUES (123, '''ok''', 1), (NULL, 'current_timestamp()', 666)`, sql)
 	}
 	{
+		sql := Table("test").Insert(Row{
+			"a": 123,
+			"b": `'ok'`,
+			"c": true,
+		}).OnDuplicateKeyUpdate().Build()
+		fmt.Println(sql)
+		assert.Equal(t, `INSERT INTO test (a, b, c) VALUES (123, '''ok''', 1) ON DUPLICATE KEY UPDATE`, sql)
+	}
+	{
 		sql := Table("test").Count("*").Build()
 		fmt.Println(sql)
 		assert.Equal(t, "SELECT COUNT(*) AS `count` FROM test", sql)
@@ -71,5 +90,25 @@ func TestTable(t *testing.T) {
 		sql := Table("test").Select("a", "b").As("x").LeftJoin("test2", "c").As("y").On("x.a=y.a").RightJoin("test3").As("z").Where("x.a=666").Build()
 		fmt.Println(sql)
 		assert.Equal(t, "SELECT a, b, c FROM test AS x LEFT JOIN test2 AS y ON x.a=y.a RIGHT JOIN test3 AS z WHERE x.a=666", sql)
+	}
+	{
+		sql := Table("test").SelectDistinct("*").Where("a=?", 123).And("b=?", 456).Skip(10).Limit(20).Build()
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT DISTINCT * FROM test WHERE a=123 AND b=456 LIMIT 10,20", sql)
+	}
+	{
+		sql := Table("test").SelectDistinct("*").Where("a=?", 123).And("b=?", 456).GroupBy("a").Having("a=b").OrderBy("b").Skip(10).Limit(20).Build()
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT DISTINCT * FROM test WHERE a=123 AND b=456 GROUP BY a HAVING a=b ORDER BY b LIMIT 10,20", sql)
+	}
+	{
+		q1 := Table("test").Select().As("a")
+		q2 := q1.Clone().As("b")
+		sql1 := q1.Build()
+		sql2 := q2.Build()
+		fmt.Println(sql1)
+		fmt.Println(sql2)
+		assert.Equal(t, "SELECT * FROM test AS a", sql1)
+		assert.Equal(t, "SELECT * FROM test AS b", sql2)
 	}
 }
