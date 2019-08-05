@@ -41,4 +41,12 @@ func TestFindMany(t *testing.T) {
 
 	ok = FindMany(tx, &list, "SHOW TABLES")
 	fmt.Printf("%v %+v\n", ok, list)
+
+	rows, err := db.Queryx("SHOW TABLES")
+	assert.NoError(t, err)
+	for rows.Next() {
+		result := make(map[string]interface{})
+		err = rows.MapScan(result)
+		fmt.Println(result)
+	}
 }
