@@ -38,7 +38,7 @@ func BuildDataSourceString(opts Options) string {
 	if opts.User == "" {
 		opts.User = "root"
 	}
-	str := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+	str := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?",
 		opts.User,
 		opts.Password,
 		opts.Host,

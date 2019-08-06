@@ -23,7 +23,7 @@ func TestBuildDataSourceString(t *testing.T) {
 		Params:     nil,
 	})
 	fmt.Println(str)
-	assert.Equal(t, "root:123@tcp(127.0.0.1:3306)/xxx&parseTime=true&loc=Local&charset=utf8mb4&time_zone=%27%2B8%3A00%27&autocommit=true", str)
+	assert.Equal(t, "root:123@tcp(127.0.0.1:3306)/xxx?&parseTime=true&loc=Local&charset=utf8mb4&time_zone=%27%2B8%3A00%27&autocommit=true", str)
 }
 
 func TestFindMany(t *testing.T) {
