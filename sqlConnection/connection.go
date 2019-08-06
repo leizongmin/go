@@ -137,7 +137,7 @@ func FindMany(tx DBBase, dest interface{}, query string, args ...interface{}) (s
 }
 
 // 插入一条数据
-func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int) {
+func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int64) {
 	incrQueueCounter()
 	var err error
 	var res sql.Result
@@ -151,13 +151,33 @@ func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int) {
 	if err != nil {
 		warningf("#%d InsertOne failed: %s => %s %+v", queryCounter, err, query, args)
 	}
-	insertId = int(id)
+	insertId = id
 	debugf("#%d InsertOne: insertId=%d", queryCounter, insertId)
 	return insertId
 }
 
+// 插入多条记录
+func InsertMany(tx DBBase, query string, args ...interface{}) (lastInsertId int64) {
+	incrQueueCounter()
+	var err error
+	var res sql.Result
+	debugf("#%d InsertOne: %s %+v", queryCounter, query, args)
+	res, err = tx.Exec(query, args...)
+	if err != nil {
+		warningf("#%d InsertOne failed: %s => %s %+v", queryCounter, err, query, args)
+		return 0
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		warningf("#%d InsertOne failed: %s => %s %+v", queryCounter, err, query, args)
+	}
+	lastInsertId = id
+	debugf("#%d InsertOne: insertId=%d", queryCounter, lastInsertId)
+	return lastInsertId
+}
+
 // 更新多条数据
-func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int) {
+func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int64) {
 	incrQueueCounter()
 	debugf("#%d UpdateMany: %s %+v", queryCounter, query, args)
 	res, err := tx.Exec(query, args...)
@@ -169,13 +189,13 @@ func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int)
 	if err != nil {
 		warningf("UpdateMany failed: %s => %s %+v", err, query, args)
 	}
-	rowsAffected = int(rows)
+	rowsAffected = rows
 	debugf("#%d UpdateMany: rowsAffected=%d", queryCounter, rowsAffected)
 	return rowsAffected
 }
 
 // 更新一条数据
-func UpdateOne(tx DBBase, query string, args ...interface{}) (rowsAffected int) {
+func UpdateOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64) {
 	incrQueueCounter()
 	rowsAffected = UpdateMany(tx, query+" LIMIT 1", args...)
 	return rowsAffected
