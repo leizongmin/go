@@ -137,7 +137,7 @@ func FindMany(tx DBBase, dest interface{}, query string, args ...interface{}) (s
 }
 
 // 插入一条数据
-func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int64) {
+func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int64, success bool) {
 	incrQueueCounter()
 	var err error
 	var res sql.Result
@@ -145,7 +145,7 @@ func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int64) {
 	res, err = tx.Exec(query, args...)
 	if err != nil {
 		warningf("#%d InsertOne failed: %s => %s %+v", queryCounter, err, query, args)
-		return 0
+		return 0, false
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
@@ -153,11 +153,11 @@ func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int64) {
 	}
 	insertId = id
 	debugf("#%d InsertOne: insertId=%d", queryCounter, insertId)
-	return insertId
+	return insertId, true
 }
 
 // 插入多条记录
-func InsertMany(tx DBBase, query string, args ...interface{}) (lastInsertId int64) {
+func InsertMany(tx DBBase, query string, args ...interface{}) (lastInsertId int64, success bool) {
 	incrQueueCounter()
 	var err error
 	var res sql.Result
@@ -165,7 +165,7 @@ func InsertMany(tx DBBase, query string, args ...interface{}) (lastInsertId int6
 	res, err = tx.Exec(query, args...)
 	if err != nil {
 		warningf("#%d InsertOne failed: %s => %s %+v", queryCounter, err, query, args)
-		return 0
+		return 0, false
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
@@ -173,17 +173,17 @@ func InsertMany(tx DBBase, query string, args ...interface{}) (lastInsertId int6
 	}
 	lastInsertId = id
 	debugf("#%d InsertOne: insertId=%d", queryCounter, lastInsertId)
-	return lastInsertId
+	return lastInsertId, true
 }
 
 // 更新多条数据
-func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int64) {
+func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
 	incrQueueCounter()
 	debugf("#%d UpdateMany: %s %+v", queryCounter, query, args)
 	res, err := tx.Exec(query, args...)
 	if err != nil {
 		warningf("UpdateMany failed: %s => %s %+v", err, query, args)
-		return 0
+		return 0, false
 	}
 	rows, err := res.RowsAffected()
 	if err != nil {
@@ -191,14 +191,13 @@ func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int6
 	}
 	rowsAffected = rows
 	debugf("#%d UpdateMany: rowsAffected=%d", queryCounter, rowsAffected)
-	return rowsAffected
+	return rowsAffected, true
 }
 
 // 更新一条数据
-func UpdateOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64) {
+func UpdateOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
 	incrQueueCounter()
-	rowsAffected = UpdateMany(tx, query+" LIMIT 1", args...)
-	return rowsAffected
+	return UpdateMany(tx, query+" LIMIT 1", args...)
 }
 
 type queryCountRow struct {
