@@ -280,6 +280,18 @@ func (q *QueryBuilder) Set(update string, args ...Value) *QueryBuilder {
 	return q
 }
 
+func (q *QueryBuilder) SetRow(row Row) *QueryBuilder {
+	var fields []string
+	for k, _ := range row {
+		fields = append(fields, k)
+	}
+	sort.Strings(fields)
+	for _, k := range fields {
+		q.Set(k+"=?", row[k])
+	}
+	return q
+}
+
 func (q *QueryBuilder) OrderBy(tpl string, args ...Value) *QueryBuilder {
 	q.orderFields = q.Format(tpl, args...)
 	q.orderBy = "ORDER BY " + q.orderFields
