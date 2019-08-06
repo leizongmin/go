@@ -201,11 +201,11 @@ func UpdateOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64
 }
 
 type queryCountRow struct {
-	Count int `db:"count"`
+	Count int64 `db:"count"`
 }
 
 // 查询记录数量，需要 SELECT count(*) AS count FROM ... 这样的格式
-func FindCount(tx DBBase, query string, args ...interface{}) (count int, success bool) {
+func FindCount(tx DBBase, query string, args ...interface{}) (count int64, success bool) {
 	row := new(queryCountRow)
 	ok := FindOne(tx, row, query, args...)
 	if ok {
