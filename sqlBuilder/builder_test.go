@@ -24,6 +24,11 @@ func TestTable(t *testing.T) {
 		assert.Equal(t, "SELECT * FROM `test` WHERE a=123 AND b=456 LIMIT 10,20", sql)
 	}
 	{
+		sql := Table("test").Select().WhereRow(Row{"a": 123, "b": 456}).Skip(10).Limit(20).Build()
+		fmt.Println(sql)
+		assert.Equal(t, "SELECT * FROM `test` WHERE `a`=123 AND `b`=456 LIMIT 10,20", sql)
+	}
+	{
 		sql := Table("test").Select("*").Where("a=?", 123).And("b=?", 456).Skip(10).Limit(20).Build()
 		fmt.Println(sql)
 		assert.Equal(t, "SELECT * FROM `test` WHERE a=123 AND b=456 LIMIT 10,20", sql)

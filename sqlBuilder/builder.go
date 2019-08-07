@@ -281,6 +281,22 @@ func (q *QueryBuilder) And(query string, args ...Value) *QueryBuilder {
 	return q
 }
 
+func (q *QueryBuilder) WhereRow(row Row) *QueryBuilder {
+	return q.AndRow(row)
+}
+
+func (q *QueryBuilder) AndRow(row Row) *QueryBuilder {
+	var fields []string
+	for k, _ := range row {
+		fields = append(fields, k)
+	}
+	sort.Strings(fields)
+	for _, k := range fields {
+		q.And(EscapeID(k)+"=?", row[k])
+	}
+	return q
+}
+
 func (q *QueryBuilder) Set(update string, args ...Value) *QueryBuilder {
 	q.update = append(q.update, q.Format(update, args...))
 	return q
