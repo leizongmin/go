@@ -392,6 +392,9 @@ func (q *QueryBuilder) buildSelect(where string) string {
 	if len(q.fields) < 1 {
 		q.fields = append(q.fields, "*")
 	}
+	for i, v := range q.fields {
+		q.fields[i] = EscapeID(v)
+	}
 	tail := sqlTailString(strings.Join(join, " "), where, q.groupBy, q.orderBy, q.limit)
 	table := q.tableNameEscaped
 	if q.mapTableToAlias != nil && len(q.mapTableToAlias[q.tableName]) > 0 {

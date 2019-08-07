@@ -298,5 +298,11 @@ func sqlTailString(list ...string) string {
 }
 
 func EscapeID(id string) string {
+	if id == "*" {
+		return id
+	}
+	if strings.IndexByte(id, '(') != -1 {
+		return id
+	}
 	return "`" + strings.Replace(strings.Replace(id, "`", "``", -1), ".", "`.`", -1) + "`"
 }

@@ -98,12 +98,12 @@ func TestTable(t *testing.T) {
 	{
 		sql := Table("test").Select("a", "b").LeftJoin("test2", "c").Build()
 		fmt.Println(sql)
-		assert.Equal(t, "SELECT a, b, c FROM `test` LEFT JOIN `test2`", sql)
+		assert.Equal(t, "SELECT `a`, `b`, `c` FROM `test` LEFT JOIN `test2`", sql)
 	}
 	{
 		sql := Table("test").Select("a", "b").As("x").LeftJoin("test2", "c").As("y").On("x.a=y.a").RightJoin("test3").As("z").Where("x.a=666").Build()
 		fmt.Println(sql)
-		assert.Equal(t, "SELECT a, b, c FROM `test` AS `x` LEFT JOIN `test2` AS `y` ON x.a=y.a RIGHT JOIN `test3` AS `z` WHERE x.a=666", sql)
+		assert.Equal(t, "SELECT `a`, `b`, `c` FROM `test` AS `x` LEFT JOIN `test2` AS `y` ON x.a=y.a RIGHT JOIN `test3` AS `z` WHERE x.a=666", sql)
 	}
 	{
 		sql := Table("test").SelectDistinct("*").Where("a=?", 123).And("b=?", 456).Skip(10).Limit(20).Build()
