@@ -296,3 +296,7 @@ func sqlTailString(list ...string) string {
 	}
 	return strings.Trim(ret, " ")
 }
+
+func EscapeID(id string) string {
+	return "`" + strings.Replace(strings.Replace(id, "`", "``", -1), ".", "`.`", -1) + "`"
+}

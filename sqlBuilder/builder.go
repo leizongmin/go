@@ -176,6 +176,9 @@ func (q *QueryBuilder) Insert(row Row) *QueryBuilder {
 	for _, k := range fields {
 		values = append(values, q.Format("?", row[k]))
 	}
+	for i, k := range fields {
+		fields[i] = EscapeID(k)
+	}
 	q.insertRows = 1
 	q.insert = fmt.Sprintf("(%s) VALUES (%s)", strings.Join(fields, ", "), strings.Join(values, ", "))
 	return q
@@ -201,6 +204,9 @@ func (q *QueryBuilder) InsertMany(rows []Row) *QueryBuilder {
 		}
 		lines = append(lines, fmt.Sprintf("(%s)", strings.Join(values, ", ")))
 	}
+	for i, k := range fields {
+		fields[i] = EscapeID(k)
+	}
 	q.insertRows = len(rows)
 	q.insert = fmt.Sprintf("(%s) VALUES %s", strings.Join(fields, ", "), strings.Join(lines, ", "))
 	return q
@@ -208,7 +214,7 @@ func (q *QueryBuilder) InsertMany(rows []Row) *QueryBuilder {
 
 func (q *QueryBuilder) Table(tableName string) *QueryBuilder {
 	q.tableName = tableName
-	q.tableNameEscaped = tableName
+	q.tableNameEscaped = EscapeID(tableName)
 	return q
 }
 
@@ -287,7 +293,7 @@ func (q *QueryBuilder) SetRow(row Row) *QueryBuilder {
 	}
 	sort.Strings(fields)
 	for _, k := range fields {
-		q.Set(k+"=?", row[k])
+		q.Set(EscapeID(k)+"=?", row[k])
 	}
 	return q
 }
@@ -351,10 +357,10 @@ func (q *QueryBuilder) buildSelect(where string) string {
 	var join []string
 	if len(q.joinTables) > 0 {
 		for _, item := range q.joinTables {
-			str := item.joinType + " " + item.table
+			str := item.joinType + " " + EscapeID(item.table)
 			a, ok := q.mapTableToAlias[item.table]
 			if ok {
-				str += " AS " + a
+				str += " AS " + EscapeID(a)
 			} else {
 				a = item.table
 			}
@@ -373,7 +379,7 @@ func (q *QueryBuilder) buildSelect(where string) string {
 	tail := sqlTailString(strings.Join(join, " "), where, q.groupBy, q.orderBy, q.limit)
 	table := q.tableNameEscaped
 	if q.mapTableToAlias != nil && len(q.mapTableToAlias[q.tableName]) > 0 {
-		table += " AS " + q.mapTableToAlias[q.tableName]
+		table += " AS " + EscapeID(q.mapTableToAlias[q.tableName])
 	}
 	return fmt.Sprintf("%s %s FROM %s %s", q.queryType, strings.Join(q.fields, ", "), table, tail)
 }
