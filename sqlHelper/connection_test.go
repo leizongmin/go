@@ -1,4 +1,4 @@
-package sqlConnection
+package sqlHelper
 
 import (
 	"fmt"

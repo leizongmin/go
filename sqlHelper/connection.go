@@ -1,4 +1,4 @@
-package sqlConnection
+package sqlHelper
 
 import (
 	"database/sql"
@@ -200,13 +200,25 @@ func UpdateOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64
 	return UpdateMany(tx, query+" LIMIT 1", args...)
 }
 
-type queryCountRow struct {
+// 删除多条数据
+func DeleteMany(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
+	incrQueueCounter()
+	return UpdateMany(tx, query, args...)
+}
+
+// 删除一条数据
+func DeleteOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
+	incrQueueCounter()
+	return UpdateMany(tx, query+" LIMIT 1", args...)
+}
+
+type QueryCountRow struct {
 	Count int64 `db:"count"`
 }
 
 // 查询记录数量，需要 SELECT count(*) AS count FROM ... 这样的格式
 func FindCount(tx DBBase, query string, args ...interface{}) (count int64, success bool) {
-	row := new(queryCountRow)
+	row := new(QueryCountRow)
 	ok := FindOne(tx, row, query, args...)
 	if ok {
 		return row.Count, true
