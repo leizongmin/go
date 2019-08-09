@@ -12,6 +12,11 @@ type WaitGroupWithTimeout struct {
 	channel  chan int64 // 接收 done 的channel
 }
 
+// 新建waitGroup
+func New() *WaitGroupWithTimeout {
+	return &WaitGroupWithTimeout{}
+}
+
 // 重置计数
 func (w *WaitGroupWithTimeout) Init(count int) {
 	w.maxCount = int64(count)
