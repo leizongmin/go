@@ -41,9 +41,10 @@ type joinTableItem struct {
 
 type Row = map[string]interface{}
 
-const LEFT_JOIN = "LEFT JOIN"
 const JOIN = "JOIN"
+const LEFT_JOIN = "LEFT JOIN"
 const RIGHT_JOIN = "RIGHT JOIN"
+const INNER_JOIN = "INNER JOIN"
 
 const SELECT = "SELECT"
 const SELECT_DISTINCT = "SELECT DISTINCT"
@@ -263,6 +264,10 @@ func (q *QueryBuilder) LeftJoin(tableName string, fields ...string) *QueryBuilde
 
 func (q *QueryBuilder) RightJoin(tableName string, fields ...string) *QueryBuilder {
 	return q.addJoinTable(tableName, RIGHT_JOIN, fields, "")
+}
+
+func (q *QueryBuilder) InnerJoin(tableName string, fields ...string) *QueryBuilder {
+	return q.addJoinTable(tableName, INNER_JOIN, fields, "")
 }
 
 func (q *QueryBuilder) On(condition string, args ...Value) *QueryBuilder {
