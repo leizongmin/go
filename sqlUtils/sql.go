@@ -29,6 +29,9 @@ type Options struct {
 	Params     map[string]string
 }
 
+type DB = sqlx.DB
+type Tx = sqlx.Tx
+
 // 创建数据库连接
 func OpenWithOptions(driverName string, opts Options) (*sqlx.DB, error) {
 	return Open(driverName, BuildDataSourceString(opts))
@@ -85,19 +88,19 @@ func BuildDataSourceString(opts Options) string {
 	return str
 }
 
-type DBBase interface {
+type AbstractDBBase interface {
 	Get(dest interface{}, query string, args ...interface{}) error
 	Select(dest interface{}, query string, args ...interface{}) error
 	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
-type DB interface {
-	DBBase
-	MustBegin() Tx
+type AbstractDB interface {
+	AbstractDBBase
+	MustBegin() AbstractTx
 }
 
-type Tx interface {
-	DBBase
+type AbstractTx interface {
+	AbstractDBBase
 	Rollback() error
 	Commit() error
 }
@@ -127,7 +130,7 @@ func warningf(format string, args ...interface{}) {
 type Row = map[string]interface{}
 
 // 查询一条数据
-func FindOne(tx DBBase, dest interface{}, query string, args ...interface{}) (success bool) {
+func FindOne(tx AbstractDBBase, dest interface{}, query string, args ...interface{}) (success bool) {
 	incrQueueCounter()
 	debugf("#%d FindOne: %s %+v", queryCounter, query, args)
 	err := tx.Get(dest, query, args...)
@@ -143,7 +146,7 @@ func FindOne(tx DBBase, dest interface{}, query string, args ...interface{}) (su
 }
 
 // 查询多条数据
-func FindMany(tx DBBase, dest interface{}, query string, args ...interface{}) (success bool) {
+func FindMany(tx AbstractDBBase, dest interface{}, query string, args ...interface{}) (success bool) {
 	incrQueueCounter()
 	debugf("%#d FindMany: %s %+v", queryCounter, query, args)
 	err := tx.Select(dest, query, args...)
@@ -159,7 +162,7 @@ func FindMany(tx DBBase, dest interface{}, query string, args ...interface{}) (s
 }
 
 // 插入一条数据
-func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int64, success bool) {
+func InsertOne(tx AbstractDBBase, query string, args ...interface{}) (insertId int64, success bool) {
 	incrQueueCounter()
 	var err error
 	var res sql.Result
@@ -179,7 +182,7 @@ func InsertOne(tx DBBase, query string, args ...interface{}) (insertId int64, su
 }
 
 // 插入多条记录
-func InsertMany(tx DBBase, query string, args ...interface{}) (lastInsertId int64, success bool) {
+func InsertMany(tx AbstractDBBase, query string, args ...interface{}) (lastInsertId int64, success bool) {
 	incrQueueCounter()
 	var err error
 	var res sql.Result
@@ -199,7 +202,7 @@ func InsertMany(tx DBBase, query string, args ...interface{}) (lastInsertId int6
 }
 
 // 更新多条数据
-func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
+func UpdateMany(tx AbstractDBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
 	incrQueueCounter()
 	debugf("#%d UpdateMany: %s %+v", queryCounter, query, args)
 	res, err := tx.Exec(query, args...)
@@ -217,19 +220,19 @@ func UpdateMany(tx DBBase, query string, args ...interface{}) (rowsAffected int6
 }
 
 // 更新一条数据
-func UpdateOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
+func UpdateOne(tx AbstractDBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
 	incrQueueCounter()
 	return UpdateMany(tx, query+" LIMIT 1", args...)
 }
 
 // 删除多条数据
-func DeleteMany(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
+func DeleteMany(tx AbstractDBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
 	incrQueueCounter()
 	return UpdateMany(tx, query, args...)
 }
 
 // 删除一条数据
-func DeleteOne(tx DBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
+func DeleteOne(tx AbstractDBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
 	incrQueueCounter()
 	return UpdateMany(tx, query+" LIMIT 1", args...)
 }
@@ -239,7 +242,7 @@ type QueryCountRow struct {
 }
 
 // 查询记录数量，需要 SELECT count(*) AS count FROM ... 这样的格式
-func FindCount(tx DBBase, query string, args ...interface{}) (count int64, success bool) {
+func FindCount(tx AbstractDBBase, query string, args ...interface{}) (count int64, success bool) {
 	row := new(QueryCountRow)
 	ok := FindOne(tx, row, query, args...)
 	if ok {

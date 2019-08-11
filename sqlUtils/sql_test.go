@@ -35,7 +35,7 @@ func TestFindMany(t *testing.T) {
 	fmt.Println(count, ok)
 
 	var list []Row
-	var tx Tx
+	var tx AbstractTx
 	tx = db.MustBegin()
 
 	ok = FindMany(tx, &list, "SHOW TABLES")
