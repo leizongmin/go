@@ -1,11 +1,10 @@
-package sqlHelper
+package sqlUtils
 
 import (
 	"fmt"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +27,7 @@ func TestBuildDataSourceString(t *testing.T) {
 
 func TestFindMany(t *testing.T) {
 	EnableDebug()
-	db, err := sqlx.Open("mysql", BuildDataSourceString(Options{Database: "mysql"}))
+	db, err := Open("mysql", BuildDataSourceString(Options{Database: "mysql"}))
 	assert.NoError(t, err)
 	fmt.Printf("%+v\n", db)
 

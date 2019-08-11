@@ -1,4 +1,4 @@
-package sqlHelper
+package sqlUtils
 
 import (
 	"database/sql"
@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/url"
 	"sync/atomic"
+
+	"github.com/jmoiron/sqlx"
 )
 
 var queryCounter int64
@@ -25,6 +27,26 @@ type Options struct {
 	ParseTime  bool
 	AutoCommit bool
 	Params     map[string]string
+}
+
+// 创建数据库连接
+func OpenWithOptions(driverName string, opts Options) (*sqlx.DB, error) {
+	return Open(driverName, BuildDataSourceString(opts))
+}
+
+// 创建数据库连接
+func Open(driverName string, dataSourceName string) (*sqlx.DB, error) {
+	return sqlx.Open(driverName, dataSourceName)
+}
+
+// 创建数据库连接，如果失败则panic
+func MustOpenWithOptions(driverName string, opts Options) *sqlx.DB {
+	return MustOpen(driverName, BuildDataSourceString(opts))
+}
+
+// 创建数据库连接，如果失败则panic
+func MustOpen(driverName string, dataSourceName string) *sqlx.DB {
+	return sqlx.MustOpen(driverName, dataSourceName)
 }
 
 // 构建连接字符串
