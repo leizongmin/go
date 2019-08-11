@@ -1,4 +1,4 @@
-package numbers
+package numberUtils
 
 import (
 	"testing"
