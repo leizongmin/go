@@ -13,6 +13,7 @@ import (
 )
 
 type HttpRequest struct {
+	Client      *http.Client
 	URL         string
 	Method      string
 	Header      http.Header
@@ -26,6 +27,36 @@ func Request() *HttpRequest {
 		Header: make(http.Header),
 		Query:  make(url.Values),
 	}
+}
+
+// 新请求，自己设置Client实例
+func RequestWithClient(client *http.Client) *HttpRequest {
+	return &HttpRequest{
+		Client: client,
+		Header: make(http.Header),
+		Query:  make(url.Values),
+	}
+}
+
+// 复制一份请求
+func (r *HttpRequest) Clone() *HttpRequest {
+	n := new(HttpRequest)
+	n.URL = r.URL
+	n.Method = r.Method
+	n.RequestBody = r.RequestBody
+	n.Header = make(http.Header)
+	for k, v := range r.Header {
+		v2 := make([]string, len(v))
+		copy(v2, v)
+		n.Header[k] = v2
+	}
+	n.Query = make(url.Values)
+	for k, v := range r.Query {
+		v2 := make([]string, len(v))
+		copy(v2, v)
+		n.Query[k] = v2
+	}
+	return n
 }
 
 // GET
@@ -129,6 +160,11 @@ func (r *HttpRequest) AcceptJSON() *HttpRequest {
 
 // 发送请求
 func (r *HttpRequest) Send() (*HttpResponse, error) {
+	client := r.Client
+	if client == nil {
+		client = GetClient()
+	}
+
 	url := r.URL
 	qs := r.Query.Encode()
 	if len(qs) > 0 {
@@ -145,7 +181,7 @@ func (r *HttpRequest) Send() (*HttpResponse, error) {
 		return nil, err
 	}
 
-	resp, err := GetClient().Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

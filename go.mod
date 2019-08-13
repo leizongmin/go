@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/go-yaml/yaml v2.1.0+incompatible
+	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.7
 	github.com/kr/pretty v0.1.0 // indirect
