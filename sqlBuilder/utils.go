@@ -2,6 +2,7 @@ package sqlBuilder
 
 import (
 	"database/sql/driver"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -110,9 +111,12 @@ func InterpolateParams(query string, args []Value, loc *time.Location) (string, 
 			if v == nil {
 				buf = append(buf, "NULL"...)
 			} else {
-				buf = append(buf, "_binary'"...)
-				buf = escapeBytesQuotes(buf, v)
-				buf = append(buf, '\'')
+				// buf = append(buf, "_binary'"...)
+				// buf = escapeBytesQuotes(buf, v)
+				// buf = append(buf, '\'')
+				buf = append(buf, "unhex("...)
+				buf = append(buf, hex.EncodeToString(v)...)
+				buf = append(buf, ')')
 			}
 		case string:
 			buf = append(buf, '\'')
