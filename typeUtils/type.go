@@ -309,22 +309,6 @@ func MustToByte(value interface{}) byte {
 	}
 }
 
-func ToByteArray(value interface{}, defaultValue []byte) []byte {
-	if v, ok := value.([]byte); ok {
-		return v
-	} else {
-		return defaultValue
-	}
-}
-
-func MustToByteArray(value interface{}) []byte {
-	if v, ok := value.([]byte); ok {
-		return v
-	} else {
-		panic(fmt.Sprintf("failed to cast %+v to []byte", value))
-	}
-}
-
 func ToRune(value interface{}, defaultValue rune) rune {
 	if v, ok := value.(rune); ok {
 		return v

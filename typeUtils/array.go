@@ -61,7 +61,7 @@ func ToIntArray(value interface{}, defaultValue []int) []int {
 func MustToIntArray(value interface{}) []int {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []int", value))
 	}
 	ret := make([]int, len(array))
 	for i, v := range array {
@@ -77,7 +77,7 @@ func MustToIntArray(value interface{}) []int {
 func MustToInt8Array(value interface{}) []int8 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []int8", value))
 	}
 	ret := make([]int8, len(array))
 	for i, v := range array {
@@ -125,7 +125,7 @@ func ToInt16Array(value interface{}, defaultValue []int16) []int16 {
 func MustToInt16Array(value interface{}) []int16 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []int16", value))
 	}
 	ret := make([]int16, len(array))
 	for i, v := range array {
@@ -157,7 +157,7 @@ func ToInt32Array(value interface{}, defaultValue []int32) []int32 {
 func MustToInt32Array(value interface{}) []int32 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []int32", value))
 	}
 	ret := make([]int32, len(array))
 	for i, v := range array {
@@ -189,7 +189,7 @@ func ToInt64Array(value interface{}, defaultValue []int64) []int64 {
 func MustToInt64Array(value interface{}) []int64 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []int64", value))
 	}
 	ret := make([]int64, len(array))
 	for i, v := range array {
@@ -221,7 +221,7 @@ func ToUintArray(value interface{}, defaultValue []uint) []uint {
 func MustToUintArray(value interface{}) []uint {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []uint", value))
 	}
 	ret := make([]uint, len(array))
 	for i, v := range array {
@@ -253,7 +253,7 @@ func ToUint8Array(value interface{}, defaultValue []uint8) []uint8 {
 func MustToUint8Array(value interface{}) []uint8 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []uint8", value))
 	}
 	ret := make([]uint8, len(array))
 	for i, v := range array {
@@ -285,7 +285,7 @@ func ToUint16Array(value interface{}, defaultValue []uint16) []uint16 {
 func MustToUint16Array(value interface{}) []uint16 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []uint16", value))
 	}
 	ret := make([]uint16, len(array))
 	for i, v := range array {
@@ -317,7 +317,7 @@ func ToUint32Array(value interface{}, defaultValue []uint32) []uint32 {
 func MustToUint32Array(value interface{}) []uint32 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []uint32", value))
 	}
 	ret := make([]uint32, len(array))
 	for i, v := range array {
@@ -349,7 +349,7 @@ func ToUint64Array(value interface{}, defaultValue []uint64) []uint64 {
 func MustToUint64Array(value interface{}) []uint64 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []uint64", value))
 	}
 	ret := make([]uint64, len(array))
 	for i, v := range array {
@@ -381,7 +381,7 @@ func ToFloat32Array(value interface{}, defaultValue []float32) []float32 {
 func MustToFloat32Array(value interface{}) []float32 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []float32", value))
 	}
 	ret := make([]float32, len(array))
 	for i, v := range array {
@@ -413,7 +413,7 @@ func ToFloat64Array(value interface{}, defaultValue []float64) []float64 {
 func MustToFloat64Array(value interface{}) []float64 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []float64", value))
 	}
 	ret := make([]float64, len(array))
 	for i, v := range array {
@@ -445,7 +445,7 @@ func ToStringArray(value interface{}, defaultValue []string) []string {
 func MustToStringArray(value interface{}) []string {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []string", value))
 	}
 	ret := make([]string, len(array))
 	for i, v := range array {
@@ -477,7 +477,7 @@ func ToMapArray(value interface{}, defaultValue []map[string]interface{}) []map[
 func MustToMapArray(value interface{}) []map[string]interface{} {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to [][map[string]interface{}", value))
 	}
 	ret := make([]map[string]interface{}, len(array))
 	for i, v := range array {
@@ -509,7 +509,7 @@ func ToTimeArray(value interface{}, defaultValue []time.Time) []time.Time {
 func MustToTimeArray(value interface{}) []time.Time {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []time.Time", value))
 	}
 	ret := make([]time.Time, len(array))
 	for i, v := range array {
@@ -541,7 +541,7 @@ func ToComplex64Array(value interface{}, defaultValue []complex64) []complex64 {
 func MustToComplex64Array(value interface{}) []complex64 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []complex64", value))
 	}
 	ret := make([]complex64, len(array))
 	for i, v := range array {
@@ -573,13 +573,45 @@ func ToComplex128Array(value interface{}, defaultValue []complex128) []complex12
 func MustToComplex128Array(value interface{}) []complex128 {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []complex128", value))
 	}
 	ret := make([]complex128, len(array))
 	for i, v := range array {
 		v2, ok := v.(complex128)
 		if !ok {
 			panic(fmt.Sprintf("failed to cast %+v to []complex128", value))
+		}
+		ret[i] = v2
+	}
+	return ret
+}
+
+func ToByteArray(value interface{}, defaultValue []byte) []byte {
+	array, ok := toInterfaceArray(value)
+	if !ok {
+		return defaultValue
+	}
+	ret := make([]byte, len(array))
+	for i, v := range array {
+		v2, ok := v.(byte)
+		if !ok {
+			return defaultValue
+		}
+		ret[i] = v2
+	}
+	return ret
+}
+
+func MustToByteArray(value interface{}) []byte {
+	array, ok := toInterfaceArray(value)
+	if !ok {
+		panic(fmt.Sprintf("failed to cast %+v to []byte", value))
+	}
+	ret := make([]byte, len(array))
+	for i, v := range array {
+		v2, ok := v.(byte)
+		if !ok {
+			panic(fmt.Sprintf("failed to cast %+v to []byte", value))
 		}
 		ret[i] = v2
 	}
@@ -605,7 +637,7 @@ func ToRuneArray(value interface{}, defaultValue []rune) []rune {
 func MustToRuneArray(value interface{}) []rune {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []rune", value))
 	}
 	ret := make([]rune, len(array))
 	for i, v := range array {
@@ -637,7 +669,7 @@ func ToUintptrArray(value interface{}, defaultValue []uintptr) []uintptr {
 func MustToUintptrArray(value interface{}) []uintptr {
 	array, ok := toInterfaceArray(value)
 	if !ok {
-		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
+		panic(fmt.Sprintf("failed to cast %+v to []uintptr", value))
 	}
 	ret := make([]uintptr, len(array))
 	for i, v := range array {
