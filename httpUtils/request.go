@@ -145,8 +145,7 @@ func (r *HttpRequest) JSON(data interface{}) *HttpRequest {
 		log.Println(err)
 		return r
 	}
-	r.SetHeader("content-type", "application/json")
-	r.SetHeader("accept", "application/json")
+	r.AcceptJSON()
 	r.RequestBody = bytes.NewReader(buf)
 	return r
 }
@@ -180,6 +179,7 @@ func (r *HttpRequest) Send() (*HttpResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	req.Header = r.Header
 
 	resp, err := client.Do(req)
 	if err != nil {
