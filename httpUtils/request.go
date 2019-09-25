@@ -164,18 +164,18 @@ func (r *HttpRequest) Send() (*HttpResponse, error) {
 		client = GetClient()
 	}
 
-	url := r.URL
+	reqUrl := r.URL
 	qs := r.Query.Encode()
 	if len(qs) > 0 {
-		i := strings.IndexRune(url, '?')
+		i := strings.IndexRune(reqUrl, '?')
 		if i == -1 {
-			url += "?" + qs
+			reqUrl += "?" + qs
 		} else {
-			url += "&" + qs
+			reqUrl += "&" + qs
 		}
 	}
 
-	req, err := http.NewRequest(r.Method, url, r.RequestBody)
+	req, err := http.NewRequest(r.Method, reqUrl, r.RequestBody)
 	if err != nil {
 		return nil, err
 	}
