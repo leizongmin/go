@@ -8,7 +8,7 @@ import (
 )
 
 func TestWaitGroupWithTimeout_Done(t *testing.T) {
-	wg := WaitGroupWithTimeout{}
+	wg := WithTimeout{}
 	wg.Init(5)
 	{
 		sn := 1

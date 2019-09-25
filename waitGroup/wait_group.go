@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type WaitGroupWithTimeout struct {
+type WithTimeout struct {
 	sn       int64      // 序号，如果 done 的时候序号跟当前的不一致，则丢弃
 	counter  int64      // 当前计数器
 	maxCount int64      // 最大数量
@@ -13,25 +13,25 @@ type WaitGroupWithTimeout struct {
 }
 
 // 新建waitGroup
-func New() *WaitGroupWithTimeout {
-	return &WaitGroupWithTimeout{}
+func New() *WithTimeout {
+	return &WithTimeout{}
 }
 
 // 重置计数
-func (w *WaitGroupWithTimeout) Init(count int) {
+func (w *WithTimeout) Init(count int) {
 	w.maxCount = int64(count)
 	w.channel = make(chan int64, count)
 	w.Reset(0)
 }
 
 // 重置计数，返回当前序号
-func (w *WaitGroupWithTimeout) Reset(sn int) {
+func (w *WithTimeout) Reset(sn int) {
 	atomic.StoreInt64(&w.sn, int64(sn))
 	atomic.StoreInt64(&w.counter, 0)
 }
 
 // 等待结束
-func (w *WaitGroupWithTimeout) Wait(timeout time.Duration) (count int, isTimeout bool) {
+func (w *WithTimeout) Wait(timeout time.Duration) (count int, isTimeout bool) {
 	t := time.After(timeout)
 loop:
 	for {
@@ -57,6 +57,6 @@ loop:
 }
 
 // 完成一个
-func (w *WaitGroupWithTimeout) Done(sn int) {
+func (w *WithTimeout) Done(sn int) {
 	w.channel <- int64(sn)
 }
