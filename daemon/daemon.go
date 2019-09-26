@@ -10,6 +10,13 @@ import (
 	"github.com/takama/daemon"
 )
 
+var logf = log.Printf
+
+// 设置日志记录函数
+func SetLogFunc(f func(format string, a ...interface{})) {
+	logf = f
+}
+
 // service has embedded daemon
 type service struct {
 	daemon.Daemon
@@ -51,15 +58,15 @@ func (s *service) Manage(onStart func(), onShutdown func() error) (string, error
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	// 启动服务
-	go onStart()
+	onStart()
 
 	// loop work cycle with accept connections or interrupt
 	// by system signal
 	for {
 		select {
 		case killSignal := <-interrupt:
-			log.Printf("Got signal: %v", killSignal)
-			log.Println("Stopping server...")
+			logf("Got signal: %v", killSignal)
+			logf("Stopping server...")
 			if err := onShutdown(); err != nil {
 				return "Daemon shutdown server failed", err
 			}
@@ -71,15 +78,23 @@ func (s *service) Manage(onStart func(), onShutdown func() error) (string, error
 	}
 }
 
+// 启动服务，一般在 main() 函数中执行
+// serviceName 服务名称
+// serviceDescription 服务介绍
+// dependencies 服务依赖项，一般为 nil
+// onStart 启动服务函数，如果函数内有阻塞的代码（比如监听服务器），需要自己创建 goroutine
+// onShutdown 关闭服务函数，用于接收到关闭信号后执行相应的清理，当函数结束时进程将退出
 func Run(serviceName string, serviceDescription string, dependencies []string, onStart func(), onShutdown func() error) {
 	srv, err := daemon.New(serviceName, serviceDescription, dependencies...)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		logf("Error: %s", err)
+		os.Exit(1)
 	}
 	service := &service{srv, serviceName, serviceDescription, dependencies}
 	status, err := service.Manage(onStart, onShutdown)
 	if err != nil {
-		log.Fatalf("Error with status %s: %s", status, err)
+		logf("Status %s: %s", status, err)
+		os.Exit(1)
 	}
-	log.Println(status)
+	logf(status)
 }
