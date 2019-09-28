@@ -4,8 +4,8 @@ import (
 	"reflect"
 )
 
-func IsArray(v interface{}) bool {
-	rt := reflect.TypeOf(v)
+func IsArray(value interface{}) bool {
+	rt := reflect.TypeOf(value)
 	switch rt.Kind() {
 	case reflect.Array:
 		return true
@@ -14,8 +14,8 @@ func IsArray(v interface{}) bool {
 	}
 }
 
-func IsSlice(v interface{}) bool {
-	rt := reflect.TypeOf(v)
+func IsSlice(value interface{}) bool {
+	rt := reflect.TypeOf(value)
 	switch rt.Kind() {
 	case reflect.Slice:
 		return true
@@ -24,8 +24,8 @@ func IsSlice(v interface{}) bool {
 	}
 }
 
-func IsArrayOrSlice(v interface{}) bool {
-	rt := reflect.TypeOf(v)
+func IsArrayOrSlice(value interface{}) bool {
+	rt := reflect.TypeOf(value)
 	switch rt.Kind() {
 	case reflect.Slice:
 		return true

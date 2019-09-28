@@ -2,16 +2,39 @@ package typeUtils
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 )
 
-func toInterfaceArray(value interface{}) ([]interface{}, bool) {
+func ToInterfaceArray(value interface{}) ([]interface{}, bool) {
 	ret, ok := value.([]interface{})
-	return ret, ok
+	if ok {
+		return ret, ok
+	}
+	if IsArrayOrSlice(value) {
+		list := reflect.ValueOf(value)
+		size := list.Len()
+		newList := make([]interface{}, size)
+		i := 0
+		for i < size {
+			newList[i] = list.Index(i).Interface()
+			i++
+		}
+		return newList, true
+	}
+	return nil, false
+}
+
+func MustToInterfaceArray(value interface{}) []interface{} {
+	ret, ok := value.([]interface{})
+	if !ok {
+		panic(fmt.Sprintf("failed to cast %+v to []interface{}", value))
+	}
+	return ret
 }
 
 func ToBoolArray(value interface{}, defaultValue []bool) []bool {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -27,7 +50,7 @@ func ToBoolArray(value interface{}, defaultValue []bool) []bool {
 }
 
 func MustToBoolArray(value interface{}) []bool {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []bool", value))
 	}
@@ -43,7 +66,7 @@ func MustToBoolArray(value interface{}) []bool {
 }
 
 func ToIntArray(value interface{}, defaultValue []int) []int {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -59,7 +82,7 @@ func ToIntArray(value interface{}, defaultValue []int) []int {
 }
 
 func MustToIntArray(value interface{}) []int {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []int", value))
 	}
@@ -75,7 +98,7 @@ func MustToIntArray(value interface{}) []int {
 }
 
 func MustToInt8Array(value interface{}) []int8 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []int8", value))
 	}
@@ -91,7 +114,7 @@ func MustToInt8Array(value interface{}) []int8 {
 }
 
 func ToInt8Array(value interface{}, defaultValue []int8) []int8 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -107,7 +130,7 @@ func ToInt8Array(value interface{}, defaultValue []int8) []int8 {
 }
 
 func ToInt16Array(value interface{}, defaultValue []int16) []int16 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -123,7 +146,7 @@ func ToInt16Array(value interface{}, defaultValue []int16) []int16 {
 }
 
 func MustToInt16Array(value interface{}) []int16 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []int16", value))
 	}
@@ -139,7 +162,7 @@ func MustToInt16Array(value interface{}) []int16 {
 }
 
 func ToInt32Array(value interface{}, defaultValue []int32) []int32 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -155,7 +178,7 @@ func ToInt32Array(value interface{}, defaultValue []int32) []int32 {
 }
 
 func MustToInt32Array(value interface{}) []int32 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []int32", value))
 	}
@@ -171,7 +194,7 @@ func MustToInt32Array(value interface{}) []int32 {
 }
 
 func ToInt64Array(value interface{}, defaultValue []int64) []int64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -187,7 +210,7 @@ func ToInt64Array(value interface{}, defaultValue []int64) []int64 {
 }
 
 func MustToInt64Array(value interface{}) []int64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []int64", value))
 	}
@@ -203,7 +226,7 @@ func MustToInt64Array(value interface{}) []int64 {
 }
 
 func ToUintArray(value interface{}, defaultValue []uint) []uint {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -219,7 +242,7 @@ func ToUintArray(value interface{}, defaultValue []uint) []uint {
 }
 
 func MustToUintArray(value interface{}) []uint {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []uint", value))
 	}
@@ -235,7 +258,7 @@ func MustToUintArray(value interface{}) []uint {
 }
 
 func ToUint8Array(value interface{}, defaultValue []uint8) []uint8 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -251,7 +274,7 @@ func ToUint8Array(value interface{}, defaultValue []uint8) []uint8 {
 }
 
 func MustToUint8Array(value interface{}) []uint8 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []uint8", value))
 	}
@@ -267,7 +290,7 @@ func MustToUint8Array(value interface{}) []uint8 {
 }
 
 func ToUint16Array(value interface{}, defaultValue []uint16) []uint16 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -283,7 +306,7 @@ func ToUint16Array(value interface{}, defaultValue []uint16) []uint16 {
 }
 
 func MustToUint16Array(value interface{}) []uint16 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []uint16", value))
 	}
@@ -299,7 +322,7 @@ func MustToUint16Array(value interface{}) []uint16 {
 }
 
 func ToUint32Array(value interface{}, defaultValue []uint32) []uint32 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -315,7 +338,7 @@ func ToUint32Array(value interface{}, defaultValue []uint32) []uint32 {
 }
 
 func MustToUint32Array(value interface{}) []uint32 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []uint32", value))
 	}
@@ -331,7 +354,7 @@ func MustToUint32Array(value interface{}) []uint32 {
 }
 
 func ToUint64Array(value interface{}, defaultValue []uint64) []uint64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -347,7 +370,7 @@ func ToUint64Array(value interface{}, defaultValue []uint64) []uint64 {
 }
 
 func MustToUint64Array(value interface{}) []uint64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []uint64", value))
 	}
@@ -363,7 +386,7 @@ func MustToUint64Array(value interface{}) []uint64 {
 }
 
 func ToFloat32Array(value interface{}, defaultValue []float32) []float32 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -379,7 +402,7 @@ func ToFloat32Array(value interface{}, defaultValue []float32) []float32 {
 }
 
 func MustToFloat32Array(value interface{}) []float32 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []float32", value))
 	}
@@ -395,7 +418,7 @@ func MustToFloat32Array(value interface{}) []float32 {
 }
 
 func ToFloat64Array(value interface{}, defaultValue []float64) []float64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -411,7 +434,7 @@ func ToFloat64Array(value interface{}, defaultValue []float64) []float64 {
 }
 
 func MustToFloat64Array(value interface{}) []float64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []float64", value))
 	}
@@ -427,7 +450,7 @@ func MustToFloat64Array(value interface{}) []float64 {
 }
 
 func ToStringArray(value interface{}, defaultValue []string) []string {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -443,7 +466,7 @@ func ToStringArray(value interface{}, defaultValue []string) []string {
 }
 
 func MustToStringArray(value interface{}) []string {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []string", value))
 	}
@@ -459,7 +482,7 @@ func MustToStringArray(value interface{}) []string {
 }
 
 func ToMapArray(value interface{}, defaultValue []map[string]interface{}) []map[string]interface{} {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -475,7 +498,7 @@ func ToMapArray(value interface{}, defaultValue []map[string]interface{}) []map[
 }
 
 func MustToMapArray(value interface{}) []map[string]interface{} {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to [][map[string]interface{}", value))
 	}
@@ -491,7 +514,7 @@ func MustToMapArray(value interface{}) []map[string]interface{} {
 }
 
 func ToTimeArray(value interface{}, defaultValue []time.Time) []time.Time {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -507,7 +530,7 @@ func ToTimeArray(value interface{}, defaultValue []time.Time) []time.Time {
 }
 
 func MustToTimeArray(value interface{}) []time.Time {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []time.Time", value))
 	}
@@ -523,7 +546,7 @@ func MustToTimeArray(value interface{}) []time.Time {
 }
 
 func ToComplex64Array(value interface{}, defaultValue []complex64) []complex64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -539,7 +562,7 @@ func ToComplex64Array(value interface{}, defaultValue []complex64) []complex64 {
 }
 
 func MustToComplex64Array(value interface{}) []complex64 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []complex64", value))
 	}
@@ -555,7 +578,7 @@ func MustToComplex64Array(value interface{}) []complex64 {
 }
 
 func ToComplex128Array(value interface{}, defaultValue []complex128) []complex128 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -571,7 +594,7 @@ func ToComplex128Array(value interface{}, defaultValue []complex128) []complex12
 }
 
 func MustToComplex128Array(value interface{}) []complex128 {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []complex128", value))
 	}
@@ -587,7 +610,7 @@ func MustToComplex128Array(value interface{}) []complex128 {
 }
 
 func ToByteArray(value interface{}, defaultValue []byte) []byte {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -603,7 +626,7 @@ func ToByteArray(value interface{}, defaultValue []byte) []byte {
 }
 
 func MustToByteArray(value interface{}) []byte {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []byte", value))
 	}
@@ -619,7 +642,7 @@ func MustToByteArray(value interface{}) []byte {
 }
 
 func ToRuneArray(value interface{}, defaultValue []rune) []rune {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -635,7 +658,7 @@ func ToRuneArray(value interface{}, defaultValue []rune) []rune {
 }
 
 func MustToRuneArray(value interface{}) []rune {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []rune", value))
 	}
@@ -651,7 +674,7 @@ func MustToRuneArray(value interface{}) []rune {
 }
 
 func ToUintptrArray(value interface{}, defaultValue []uintptr) []uintptr {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		return defaultValue
 	}
@@ -667,7 +690,7 @@ func ToUintptrArray(value interface{}, defaultValue []uintptr) []uintptr {
 }
 
 func MustToUintptrArray(value interface{}) []uintptr {
-	array, ok := toInterfaceArray(value)
+	array, ok := ToInterfaceArray(value)
 	if !ok {
 		panic(fmt.Sprintf("failed to cast %+v to []uintptr", value))
 	}
