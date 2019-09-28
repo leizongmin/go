@@ -1,5 +1,9 @@
 package textUtils
 
+import (
+	"strings"
+)
+
 // 是否为空白字符
 func IsWhitesapce(ch rune) bool {
 	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
@@ -28,4 +32,9 @@ func IsLowerLetter(ch rune) bool {
 // 是否为数字
 func IsDigit(ch rune) bool {
 	return ch >= '0' && ch <= '9'
+}
+
+// 是否以指定字符串开头
+func StartsWith(s string, substr string) bool {
+	return strings.Index(s, substr) == 0
 }

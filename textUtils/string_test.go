@@ -20,4 +20,8 @@ func TestString(t *testing.T) {
 	assert.False(t, IsSpace('3'))
 	assert.False(t, IsLowerLetter('X'))
 	assert.False(t, IsUpperLetter('x'))
+
+	assert.True(t, StartsWith("abc", "a"))
+	assert.False(t, StartsWith("abc", "A"))
+	assert.False(t, StartsWith("abc", "b"))
 }
