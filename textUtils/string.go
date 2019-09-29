@@ -1,7 +1,12 @@
 package textUtils
 
 import (
+	"fmt"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/leizongmin/go-common-libs/typeUtils"
 )
 
 // 是否为空白字符
@@ -37,4 +42,23 @@ func IsDigit(ch rune) bool {
 // 是否以指定字符串开头
 func StartsWith(s string, substr string) bool {
 	return strings.Index(s, substr) == 0
+}
+
+// 将任意内容转换为字符串
+func AnythingToString(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	if v2, ok := v.(string); ok {
+		return v2
+	}
+	if v2, ok := v.(map[string]interface{}); ok {
+		ret, _ := jsoniter.MarshalToString(&v2)
+		return ret
+	}
+	if v2, ok := typeUtils.ToInterfaceArray(v); ok {
+		ret, _ := jsoniter.MarshalToString(&v2)
+		return ret
+	}
+	return fmt.Sprintf("%+v", v)
 }
