@@ -17,6 +17,12 @@ func TestRequest(t *testing.T) {
 		fmt.Println(res.Status(), res.Header(), string(res.MustBody()))
 	}
 	{
+		res, err := req.Clone().WithMethod("GET").WithURL("https://cnodejs.org").Send()
+		assert.NoError(t, err)
+		defer res.Close()
+		fmt.Println(res.Status(), res.Header(), string(res.MustBody()))
+	}
+	{
 		res, err := RequestWithClient(&http.Client{}).GET("https://cnodejs.org/api/v1/topics").SetQuery("limit", "1").AcceptJSON().Send()
 		assert.NoError(t, err)
 		defer res.Close()

@@ -59,6 +59,18 @@ func (r *HttpRequest) Clone() *HttpRequest {
 	return n
 }
 
+// 设置请求方法
+func (r *HttpRequest) WithMethod(method string) *HttpRequest {
+	r.Method = method
+	return r
+}
+
+// 设置请求地址
+func (r *HttpRequest) WithURL(url string) *HttpRequest {
+	r.URL = url
+	return r
+}
+
 // GET
 func (r *HttpRequest) GET(url string) *HttpRequest {
 	r.URL = url
