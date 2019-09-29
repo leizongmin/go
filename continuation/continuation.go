@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/xerrors"
 )
 
 // 函数段
@@ -25,8 +26,13 @@ func (c *Continuation) Segment(segment Segment) *Continuation {
 	return c
 }
 
+// 从头开始执行函数
+func (c *Continuation) Call(local interface{}) (*Frame, error) {
+	return c.CallStep(0, local)
+}
+
 // 调用指定分段的函数
-func (c *Continuation) Call(step int, local interface{}) (*Frame, error) {
+func (c *Continuation) CallStep(step int, local interface{}) (*Frame, error) {
 	if step >= len(c.segments) {
 		return nil, fmt.Errorf("invalid step %d (0~%d)", step, len(c.segments))
 	}
@@ -37,17 +43,20 @@ func (c *Continuation) Call(step int, local interface{}) (*Frame, error) {
 }
 
 // 等待执行结果
-func (c *Continuation) Wait(frame *Frame) (sleep bool, result interface{}, err error) {
+func (c *Continuation) Wait(frame *Frame) (status FrameMessage, result interface{}, err error) {
 	for {
-		switch <-frame.channel {
-		case frameMessageSleep:
-			return true, nil, nil
-		case frameMessageNext:
+		status = <-frame.channel
+		switch status {
+		case FrameStatusSleep:
+			return status, nil, nil
+		case FrameStatusYield:
+			return status, frame.local, nil
+		case FrameStatusNext:
 			callCurrentStep(frame)
-		case frameMessageReturn:
-			return false, frame.result, frame.error
-		case frameMessageThrow:
-			return false, frame.result, frame.error
+		case FrameStatusReturn:
+			return status, frame.result, frame.error
+		case FrameStatusThrow:
+			return status, frame.result, frame.error
 		}
 	}
 }
@@ -55,17 +64,25 @@ func (c *Continuation) Wait(frame *Frame) (sleep bool, result interface{}, err e
 // 调用指定分段
 func callCurrentStep(frame *Frame) {
 	segment := frame.continuation.segments[frame.step]
-	go segment(frame)
+	go func() {
+		defer func() {
+			err := recover()
+			if err != nil {
+				frame.Throw(xerrors.Errorf("%s", err))
+			}
+		}()
+		segment(frame)
+	}()
 }
 
 // 创建新的帧栈
 func (c *Continuation) NewFrame(step int, local interface{}) *Frame {
-	return &Frame{continuation: c, step: step, local: local, channel: make(chan frameMessage, 0)}
+	return &Frame{continuation: c, step: step, local: local, channel: make(chan FrameMessage, 0)}
 }
 
 // 休眠
 func (c *Continuation) Sleep(frame *Frame) (result interface{}, err error) {
-	frame.channel <- frameMessageSleep
+	frame.channel <- FrameStatusSleep
 	return frame.result, frame.error
 }
 

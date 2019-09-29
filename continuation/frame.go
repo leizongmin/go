@@ -1,18 +1,19 @@
 package continuation
 
-type frameMessage int
+type FrameMessage int
 
 const (
-	frameMessageSleep frameMessage = iota
-	frameMessageNext
-	frameMessageReturn
-	frameMessageThrow
+	FrameStatusSleep FrameMessage = iota
+	FrameStatusYield
+	FrameStatusNext
+	FrameStatusReturn
+	FrameStatusThrow
 )
 
 // 帧栈
 type Frame struct {
 	continuation *Continuation
-	channel      chan frameMessage
+	channel      chan FrameMessage
 
 	step  int
 	local interface{}
@@ -32,6 +33,12 @@ func (f *Frame) IsDone() bool {
 	return f.done
 }
 
+// 产生结果，下一步继续执行当前段
+func (f *Frame) Yield(value interface{}) {
+	f.local = value
+	f.channel <- FrameStatusYield
+}
+
 // 执行下一段
 func (f *Frame) Next(value interface{}) {
 	nextStep := f.step + 1
@@ -42,19 +49,19 @@ func (f *Frame) Next(value interface{}) {
 
 	f.step = nextStep
 	f.local = value
-	f.channel <- frameMessageNext
+	f.channel <- FrameStatusNext
 }
 
 // 返回结果
 func (f *Frame) Return(value interface{}) {
 	f.done = true
 	f.result = value
-	f.channel <- frameMessageReturn
+	f.channel <- FrameStatusReturn
 }
 
 // 抛出异常
 func (f *Frame) Throw(err error) {
 	f.done = false
 	f.error = err
-	f.channel <- frameMessageThrow
+	f.channel <- FrameStatusThrow
 }

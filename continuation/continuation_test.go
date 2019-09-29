@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/leizongmin/go-common-libs/typeUtils"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/leizongmin/go-common-libs/typeUtils"
 )
 
 func TestNew(t *testing.T) {
@@ -31,7 +32,7 @@ func TestNew(t *testing.T) {
 	})
 
 	local := map[string]interface{}{"hello": "world"}
-	f, err := doSomething.Call(0, local)
+	f, err := doSomething.Call(local)
 	assert.NoError(t, err)
 
 	go func() {
@@ -42,9 +43,9 @@ func TestNew(t *testing.T) {
 		assert.Nil(t, err)
 	}()
 
-	sleep, result, err := doSomething.Wait(f)
-	fmt.Println(sleep, result, err)
-	assert.True(t, sleep)
+	status, result, err := doSomething.Wait(f)
+	fmt.Println(status, result, err)
+	assert.Equal(t, FrameStatusSleep, status)
 	assert.Nil(t, result)
 	assert.Nil(t, err)
 	assert.False(t, f.IsDone())
@@ -59,9 +60,9 @@ func TestNew(t *testing.T) {
 
 	err = doSomething.Restore(data)
 	assert.NoError(t, err)
-	sleep, result, err = doSomething.Wait(f)
-	fmt.Println(sleep, result, err)
-	assert.False(t, sleep)
+	status, result, err = doSomething.Wait(f)
+	fmt.Println(status, result, err)
+	assert.Equal(t, FrameStatusReturn, status)
 	assert.NotNil(t, result)
 	assert.Nil(t, err)
 
@@ -70,4 +71,53 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, true, result2["step1"])
 	assert.Equal(t, true, result2["step2"])
 	assert.Equal(t, true, result2["step3"])
+}
+
+func TestFrame_Yield(t *testing.T) {
+	doSomething := New().Segment(func(frame *Frame) {
+		count := typeUtils.MustToInt(frame.Local())
+		if count < 10 {
+			frame.Yield(count + 1)
+		} else {
+			frame.Next(count)
+		}
+	}).Segment(func(frame *Frame) {
+		frame.Return(frame.Local())
+	})
+
+	frame, err := doSomething.Call(0)
+	assert.NoError(t, err)
+	i := 0
+	for i < 10 {
+		status, result, err := doSomething.Wait(frame)
+		assert.NoError(t, err)
+		assert.Equal(t, FrameStatusYield, status)
+		assert.Equal(t, i+1, result)
+		i++
+		doSomething.Resume(frame)
+	}
+
+	status, result, err := doSomething.Wait(frame)
+	assert.NoError(t, err)
+	assert.Equal(t, FrameStatusReturn, status)
+	assert.Equal(t, 10, result)
+}
+
+func TestFrame_Throw(t *testing.T) {
+	doSomething := New().Segment(func(frame *Frame) {
+		frame.Next(nil)
+	}).Segment(func(frame *Frame) {
+		panic("some error")
+	})
+
+	frame, err := doSomething.Call(nil)
+	assert.NoError(t, err)
+
+	status, result, err := doSomething.Wait(frame)
+	assert.Equal(t, FrameStatusThrow, status)
+	assert.Nil(t, result)
+	assert.NotNil(t, err)
+	assert.Equal(t, "some error", err.Error())
+
+	fmt.Println(err)
 }
