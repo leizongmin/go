@@ -201,6 +201,15 @@ func (r *HttpRequest) Send() (*HttpResponse, error) {
 	return &HttpResponse{resp: resp}, nil
 }
 
+// 发送请求，如果出错则panic
+func (r *HttpRequest) MustSend() *HttpResponse {
+	res, err := r.Send()
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
 type HttpResponse struct {
 	resp *http.Response
 }

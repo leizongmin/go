@@ -11,8 +11,7 @@ import (
 func TestRequest(t *testing.T) {
 	req := Request()
 	{
-		res, err := req.Clone().GET("https://cnodejs.org").Send()
-		assert.NoError(t, err)
+		res := req.Clone().GET("https://cnodejs.org").MustSend()
 		defer res.Close()
 		fmt.Println(res.Status(), res.Header(), string(res.MustBody()))
 	}
