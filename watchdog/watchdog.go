@@ -21,7 +21,7 @@ var CommandName = "watchdog"
 // }
 func Main() {
 	if len(os.Args) < 3 {
-		log.Fatalf("usage: %s start|stop example_program", CommandName)
+		log.Fatalf("Usage: %s <start|stop> <example_program>", CommandName)
 	}
 
 	workingDir, err := os.Getwd()
