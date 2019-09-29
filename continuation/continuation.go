@@ -9,20 +9,32 @@ import (
 )
 
 // 函数段
-type Segment func(frame *Frame)
+type SegmentFunc func(frame *Frame)
+
+// 函数段
+type Segment struct {
+	Func     SegmentFunc
+	Continue bool
+}
 
 type Continuation struct {
 	segments []Segment
 }
 
 // 创建分段式函数
-func New(segments ...Segment) *Continuation {
-	return &Continuation{segments: segments}
+func New() *Continuation {
+	return &Continuation{}
 }
 
-// 增加函数分段
-func (c *Continuation) Segment(segment Segment) *Continuation {
-	c.segments = append(c.segments, segment)
+// 增加函数分段，每执行完一段自动暂停，需要手动 Resume()
+func (c *Continuation) Segment(f SegmentFunc) *Continuation {
+	c.segments = append(c.segments, Segment{Func: f, Continue: false})
+	return c
+}
+
+// 增加函数分段，每执行完一段会自动执行下一段
+func (c *Continuation) ContinueSegment(f SegmentFunc) *Continuation {
+	c.segments = append(c.segments, Segment{Func: f, Continue: true})
 	return c
 }
 
@@ -38,7 +50,7 @@ func (c *Continuation) CallStep(step int, local interface{}) (*Frame, error) {
 	}
 	frame := c.NewFrame(step, local)
 	segment := c.segments[step]
-	go segment(frame)
+	go segment.Func(frame)
 	return frame, nil
 }
 
@@ -52,7 +64,12 @@ func (c *Continuation) Wait(frame *Frame) (status FrameMessage, result interface
 		case FrameStatusYield:
 			return status, frame.local, nil
 		case FrameStatusNext:
-			callCurrentStep(frame)
+			segment := c.segments[frame.step]
+			if segment.Continue {
+				callCurrentStep(frame)
+			} else {
+				return status, frame.local, nil
+			}
 		case FrameStatusReturn:
 			return status, frame.result, frame.error
 		case FrameStatusThrow:
@@ -71,7 +88,7 @@ func callCurrentStep(frame *Frame) {
 				frame.Throw(xerrors.Errorf("%s", err))
 			}
 		}()
-		segment(frame)
+		segment.Func(frame)
 	}()
 }
 

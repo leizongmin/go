@@ -11,19 +11,19 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	doSomething := New().Segment(func(frame *Frame) {
+	doSomething := New().ContinueSegment(func(frame *Frame) {
 		fmt.Println("step1")
 		time.Sleep(time.Millisecond * 200)
 		local := typeUtils.MustToMap(frame.Local())
 		local["step1"] = true
 		frame.Next(local)
-	}).Segment(func(frame *Frame) {
+	}).ContinueSegment(func(frame *Frame) {
 		fmt.Println("step2")
 		time.Sleep(time.Millisecond * 200)
 		local := typeUtils.MustToMap(frame.Local())
 		local["step2"] = true
 		frame.Next(local)
-	}).Segment(func(frame *Frame) {
+	}).ContinueSegment(func(frame *Frame) {
 		fmt.Println("step3")
 		time.Sleep(time.Millisecond * 200)
 		local := typeUtils.MustToMap(frame.Local())
@@ -74,14 +74,14 @@ func TestNew(t *testing.T) {
 }
 
 func TestFrame_Yield(t *testing.T) {
-	doSomething := New().Segment(func(frame *Frame) {
+	doSomething := New().ContinueSegment(func(frame *Frame) {
 		count := typeUtils.MustToInt(frame.Local())
 		if count < 10 {
 			frame.Yield(count + 1)
 		} else {
 			frame.Next(count)
 		}
-	}).Segment(func(frame *Frame) {
+	}).ContinueSegment(func(frame *Frame) {
 		frame.Return(frame.Local())
 	})
 
@@ -104,9 +104,9 @@ func TestFrame_Yield(t *testing.T) {
 }
 
 func TestFrame_Throw(t *testing.T) {
-	doSomething := New().Segment(func(frame *Frame) {
+	doSomething := New().ContinueSegment(func(frame *Frame) {
 		frame.Next(nil)
-	}).Segment(func(frame *Frame) {
+	}).ContinueSegment(func(frame *Frame) {
 		panic("some error")
 	})
 
@@ -120,4 +120,27 @@ func TestFrame_Throw(t *testing.T) {
 	assert.Equal(t, "some error", err.Error())
 
 	fmt.Println(err)
+}
+
+func TestFrame_Manual(t *testing.T) {
+	doSomething := New().Segment(func(frame *Frame) {
+		frame.Next(123)
+	}).Segment(func(frame *Frame) {
+		frame.Return(456)
+	})
+
+	frame, err := doSomething.Call(nil)
+	assert.NoError(t, err)
+
+	status, result, err := doSomething.Wait(frame)
+	assert.Equal(t, FrameStatusNext, status)
+	assert.Nil(t, err)
+	assert.Equal(t, 123, result)
+
+	doSomething.Resume(frame)
+	status, result, err = doSomething.Wait(frame)
+	assert.Equal(t, FrameStatusReturn, status)
+	assert.Nil(t, err)
+	assert.Equal(t, 456, result)
+	assert.True(t, frame.IsDone())
 }
