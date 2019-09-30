@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWaitGroupWithTimeout_Done(t *testing.T) {
+func TestWithTimeout_WaitWithTimeout(t *testing.T) {
 	wg := WithTimeout{}
 	wg.Init(5)
 	{
@@ -19,7 +19,7 @@ func TestWaitGroupWithTimeout_Done(t *testing.T) {
 				wg.Done(sn)
 			}()
 		}
-		count, isTimeout := wg.Wait(time.Millisecond * 20)
+		count, isTimeout := wg.WaitWithTimeout(time.Millisecond * 20)
 		assert.Equal(t, 5, count)
 		assert.Equal(t, false, isTimeout)
 	}
@@ -33,7 +33,7 @@ func TestWaitGroupWithTimeout_Done(t *testing.T) {
 				wg.Done(sn)
 			}()
 		}
-		count, isTimeout := wg.Wait(time.Millisecond * 20)
+		count, isTimeout := wg.WaitWithTimeout(time.Millisecond * 20)
 		assert.Equal(t, 5, count)
 		assert.Equal(t, false, isTimeout)
 	}
@@ -47,7 +47,7 @@ func TestWaitGroupWithTimeout_Done(t *testing.T) {
 				wg.Done(sn)
 			}()
 		}
-		count, isTimeout := wg.Wait(time.Millisecond * 20)
+		count, isTimeout := wg.WaitWithTimeout(time.Millisecond * 20)
 		assert.Equal(t, 0, count)
 		assert.Equal(t, true, isTimeout)
 	}
@@ -61,8 +61,30 @@ func TestWaitGroupWithTimeout_Done(t *testing.T) {
 				wg.Done(sn)
 			}(i)
 		}
-		count, isTimeout := wg.Wait(time.Millisecond * 20)
+		count, isTimeout := wg.WaitWithTimeout(time.Millisecond * 20)
 		assert.Equal(t, true, count < 5)
 		assert.Equal(t, true, isTimeout)
 	}
+}
+
+func TestWithTimeout_Wait(t *testing.T) {
+	wg := New()
+	wg.Init(5)
+	ch := make(chan interface{}, 0)
+	go func() {
+		sn := 1
+		wg.Reset(sn)
+		for i := 0; i < 5; i++ {
+			go func(i int) {
+				time.Sleep(time.Millisecond * 10 * time.Duration(i+1))
+				wg.Done(sn)
+			}(i)
+		}
+		count, isCancel := wg.Wait(ch)
+		assert.Equal(t, 2, count)
+		assert.Equal(t, true, isCancel)
+	}()
+	time.Sleep(time.Millisecond * 25)
+	ch <- 1
+	time.Sleep(time.Millisecond * 100)
 }
