@@ -3,6 +3,7 @@ package continuation
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/xerrors"
@@ -109,6 +110,16 @@ func (c *Continuation) Sleep(frame *Frame) (result interface{}, err error) {
 	return frame.result, frame.error
 }
 
+// 休眠，指定一个超时时间，如果超过时间上一分段未执行完则强制放弃
+func (c *Continuation) SleepWithTimeout(frame *Frame, duration time.Duration) (result interface{}, err error) {
+	select {
+	case frame.channel <- FrameStatusSleep:
+		return frame.result, frame.error
+	case <-time.After(duration):
+		return frame.local, SleepTimeoutError
+	}
+}
+
 // 继续执行
 func (c *Continuation) Resume(frame *Frame) {
 	callCurrentStep(frame)
@@ -142,3 +153,6 @@ type dumpFrameData struct {
 
 // 已经执行完成
 var AlreadyDoneError = errors.New("already done")
+
+// 休眠超时
+var SleepTimeoutError = errors.New("sleep timeout")

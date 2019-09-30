@@ -190,3 +190,37 @@ func TestFrame_CheckContinue2(t *testing.T) {
 	assert.Equal(t, 456, result)
 	assert.True(t, frame.IsDone())
 }
+
+func TestFrame_SleepWithTimeout(t *testing.T) {
+	doSomething := New().ContinueSegment(func(frame *Frame) {
+		time.Sleep(time.Millisecond * 200)
+		frame.Next(123)
+	}).ContinueSegment(func(frame *Frame) {
+		time.Sleep(time.Millisecond * 200)
+		frame.Return(456)
+	})
+
+	frame, err := doSomething.Call(nil)
+	assert.NoError(t, err)
+
+	result, err := doSomething.SleepWithTimeout(frame, time.Millisecond*300)
+	assert.Equal(t, SleepTimeoutError, err)
+	assert.Equal(t, 123, result)
+}
+
+func TestFrame_SleepWithTimeout2(t *testing.T) {
+	doSomething := New().ContinueSegment(func(frame *Frame) {
+		time.Sleep(time.Millisecond * 200)
+		frame.Next(123)
+	}).ContinueSegment(func(frame *Frame) {
+		time.Sleep(time.Millisecond * 200)
+		frame.Return(456)
+	})
+
+	frame, err := doSomething.Call(nil)
+	assert.NoError(t, err)
+
+	result, err := doSomething.SleepWithTimeout(frame, time.Millisecond*500)
+	assert.NoError(t, err)
+	assert.Equal(t, 456, result)
+}

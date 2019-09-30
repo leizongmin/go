@@ -1,6 +1,10 @@
 package events
 
-import "sync"
+import (
+	"reflect"
+	"runtime"
+	"sync"
+)
 
 type EventEmitter struct {
 	mu     sync.RWMutex
@@ -41,8 +45,9 @@ func (e *EventEmitter) RemoveEventListener(name string, listener EventListener) 
 	defer e.mu.Unlock()
 
 	listeners := e.ensureEventListeners(name)
+	listenerName := getFuncFullName(listener)
 	for i, f := range listeners[:] {
-		if &f == &listener {
+		if getFuncFullName(f) == listenerName {
 			listeners = append(listeners[:i], listeners[i+1:]...)
 		}
 	}
@@ -77,4 +82,8 @@ func (e *EventEmitter) EmitEvent(name string, args ...interface{}) int {
 		f(args...)
 	}
 	return len(listeners)
+}
+
+func getFuncFullName(f interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
