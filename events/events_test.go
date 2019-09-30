@@ -1,9 +1,13 @@
 package events
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/leizongmin/go-common-libs/typeUtils"
 )
 
 func TestNew(t *testing.T) {
@@ -33,6 +37,51 @@ func TestNew(t *testing.T) {
 		argv = args[len(args)-1]
 	})
 	e.EmitEvent("call", 123456)
+	time.Sleep(time.Millisecond * 100)
 	assert.Equal(t, true, isCall)
 	assert.Equal(t, 123456, argv)
+}
+
+func TestNew2(t *testing.T) {
+	e := New()
+
+	c1, remove1 := e.NewEventListenerChan("f1", 0)
+	c2, remove2 := e.NewEventListenerChan("f1", 0)
+
+	var c1r []int
+	var c2r []int
+	go func() {
+		for {
+			v := typeUtils.MustToIntArray(<-c1)
+			if len(v) < 1 {
+				break
+			}
+			c1r = append(c1r, v[0])
+		}
+	}()
+	go func() {
+		for {
+			v := typeUtils.MustToIntArray(<-c2)
+			if len(v) < 1 {
+				break
+			}
+			c2r = append(c2r, v[0])
+		}
+	}()
+
+	time.Sleep(time.Millisecond * 10)
+	assert.Equal(t, 2, e.EmitEvent("f1", 123))
+	assert.Equal(t, 2, e.EmitEvent("f1", 456))
+	assert.Equal(t, 2, e.EmitEvent("f1", 789))
+	assert.Equal(t, 2, e.EmitEvent("f1", 666))
+
+	time.Sleep(time.Millisecond * 100)
+	remove1()
+	remove2()
+
+	fmt.Println(c1r)
+	fmt.Println(c2r)
+
+	assert.Equal(t, []int{123, 456, 789, 666}, c1r)
+	assert.Equal(t, []int{123, 456, 789, 666}, c2r)
 }

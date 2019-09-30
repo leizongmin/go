@@ -9,6 +9,7 @@ import (
 type EventEmitter struct {
 	mu     sync.RWMutex
 	events map[string][]EventListener
+	chans  map[string][]chan []interface{}
 }
 
 type EventListener = func(args ...interface{})
@@ -16,6 +17,28 @@ type EventListener = func(args ...interface{})
 // 新建事件触发器
 func New() *EventEmitter {
 	return &EventEmitter{}
+}
+
+// 获取事件监听器的chan
+func (e *EventEmitter) NewEventListenerChan(name string, size int) (c chan []interface{}, remove func()) {
+	if e.chans == nil {
+		e.chans = make(map[string][]chan []interface{})
+	}
+	c = make(chan []interface{}, size)
+	e.chans[name] = append(e.chans[name], c)
+	remove = func() {
+		for i, v := range e.chans[name] {
+			if v == c {
+				e.chans[name] = append(e.chans[name][:i], e.chans[name][i+1:]...)
+				close(c)
+				break
+			}
+		}
+		if len(e.chans[name]) < 1 {
+			delete(e.chans, name)
+		}
+	}
+	return c, remove
 }
 
 func (e *EventEmitter) ensureEventListeners(name string) []EventListener {
@@ -66,22 +89,37 @@ func (e *EventEmitter) RemoveAllEventListener(name string) {
 	delete(e.events, name)
 }
 
-// 触发事件
-func (e *EventEmitter) EmitEvent(name string, args ...interface{}) int {
+// 触发事件，触发后立即返回，不等待监听器执行完毕。
+// 但是保证同一事件的所有监听器一定是按照顺序执行的，如果前面的监听器阻塞了则会导致后面的事件也阻塞
+func (e *EventEmitter) EmitEvent(name string, args ...interface{}) (count int) {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	if e.events == nil {
-		return 0
+	if e.events != nil {
+		listeners, exist := e.events[name]
+		if exist {
+			count += len(listeners)
+			go func() {
+				for _, f := range listeners {
+					f(args...)
+				}
+			}()
+		}
 	}
-	listeners, exist := e.events[name]
-	if !exist {
-		return 0
+
+	if e.chans != nil {
+		chans, exist := e.chans[name]
+		if exist {
+			count += len(chans)
+			go func() {
+				for _, c := range chans {
+					c <- args
+				}
+			}()
+		}
 	}
-	for _, f := range listeners {
-		f(args...)
-	}
-	return len(listeners)
+
+	return count
 }
 
 func getFuncFullName(f interface{}) string {
