@@ -40,11 +40,11 @@ func (c *Continuation) ContinueSegment(f SegmentFunc) *Continuation {
 
 // 从头开始执行函数
 func (c *Continuation) Call(local interface{}) (*Frame, error) {
-	return c.CallStep(0, local)
+	return c.CallFromStep(0, local)
 }
 
 // 调用指定分段的函数
-func (c *Continuation) CallStep(step int, local interface{}) (*Frame, error) {
+func (c *Continuation) CallFromStep(step int, local interface{}) (*Frame, error) {
 	if step >= len(c.segments) {
 		return nil, fmt.Errorf("invalid step %d (0~%d)", step, len(c.segments))
 	}
@@ -54,8 +54,8 @@ func (c *Continuation) CallStep(step int, local interface{}) (*Frame, error) {
 	return frame, nil
 }
 
-// 等待执行结果
-func (c *Continuation) Wait(frame *Frame) (status FrameMessage, result interface{}, err error) {
+// 等待执行结果，如果 checkContinue 不为空则通过此函数判断是否自动继续执行下一分段（忽略分段原本的continue属性属性）
+func (c *Continuation) Wait(frame *Frame, checkContinue func(frame *Frame) bool) (status FrameMessage, result interface{}, err error) {
 	for {
 		status = <-frame.channel
 		switch status {
@@ -65,7 +65,13 @@ func (c *Continuation) Wait(frame *Frame) (status FrameMessage, result interface
 			return status, frame.local, nil
 		case FrameStatusNext:
 			segment := c.segments[frame.step]
-			if segment.Continue {
+			continueNext := false
+			if checkContinue != nil {
+				continueNext = checkContinue(frame)
+			} else if segment.Continue {
+				continueNext = true
+			}
+			if continueNext {
 				callCurrentStep(frame)
 			} else {
 				return status, frame.local, nil

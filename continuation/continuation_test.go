@@ -43,7 +43,7 @@ func TestNew(t *testing.T) {
 		assert.Nil(t, err)
 	}()
 
-	status, result, err := doSomething.Wait(f)
+	status, result, err := doSomething.Wait(f, nil)
 	fmt.Println(status, result, err)
 	assert.Equal(t, FrameStatusSleep, status)
 	assert.Nil(t, result)
@@ -60,7 +60,7 @@ func TestNew(t *testing.T) {
 
 	err = doSomething.Restore(data)
 	assert.NoError(t, err)
-	status, result, err = doSomething.Wait(f)
+	status, result, err = doSomething.Wait(f, nil)
 	fmt.Println(status, result, err)
 	assert.Equal(t, FrameStatusReturn, status)
 	assert.NotNil(t, result)
@@ -89,7 +89,7 @@ func TestFrame_Yield(t *testing.T) {
 	assert.NoError(t, err)
 	i := 0
 	for i < 10 {
-		status, result, err := doSomething.Wait(frame)
+		status, result, err := doSomething.Wait(frame, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, FrameStatusYield, status)
 		assert.Equal(t, i+1, result)
@@ -97,7 +97,7 @@ func TestFrame_Yield(t *testing.T) {
 		doSomething.Resume(frame)
 	}
 
-	status, result, err := doSomething.Wait(frame)
+	status, result, err := doSomething.Wait(frame, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, FrameStatusReturn, status)
 	assert.Equal(t, 10, result)
@@ -113,7 +113,7 @@ func TestFrame_Throw(t *testing.T) {
 	frame, err := doSomething.Call(nil)
 	assert.NoError(t, err)
 
-	status, result, err := doSomething.Wait(frame)
+	status, result, err := doSomething.Wait(frame, nil)
 	assert.Equal(t, FrameStatusThrow, status)
 	assert.Nil(t, result)
 	assert.NotNil(t, err)
@@ -132,13 +132,59 @@ func TestFrame_Manual(t *testing.T) {
 	frame, err := doSomething.Call(nil)
 	assert.NoError(t, err)
 
-	status, result, err := doSomething.Wait(frame)
+	status, result, err := doSomething.Wait(frame, nil)
 	assert.Equal(t, FrameStatusNext, status)
 	assert.Nil(t, err)
 	assert.Equal(t, 123, result)
 
 	doSomething.Resume(frame)
-	status, result, err = doSomething.Wait(frame)
+	status, result, err = doSomething.Wait(frame, nil)
+	assert.Equal(t, FrameStatusReturn, status)
+	assert.Nil(t, err)
+	assert.Equal(t, 456, result)
+	assert.True(t, frame.IsDone())
+}
+
+func TestFrame_CheckContinue(t *testing.T) {
+	doSomething := New().ContinueSegment(func(frame *Frame) {
+		frame.Next(123)
+	}).ContinueSegment(func(frame *Frame) {
+		frame.Return(456)
+	})
+
+	frame, err := doSomething.Call(nil)
+	assert.NoError(t, err)
+
+	status, result, err := doSomething.Wait(frame, func(frame *Frame) bool {
+		return false
+	})
+	assert.Equal(t, FrameStatusNext, status)
+	assert.Nil(t, err)
+	assert.Equal(t, 123, result)
+
+	doSomething.Resume(frame)
+	status, result, err = doSomething.Wait(frame, func(frame *Frame) bool {
+		return false
+	})
+	assert.Equal(t, FrameStatusReturn, status)
+	assert.Nil(t, err)
+	assert.Equal(t, 456, result)
+	assert.True(t, frame.IsDone())
+}
+
+func TestFrame_CheckContinue2(t *testing.T) {
+	doSomething := New().ContinueSegment(func(frame *Frame) {
+		frame.Next(123)
+	}).ContinueSegment(func(frame *Frame) {
+		frame.Return(456)
+	})
+
+	frame, err := doSomething.Call(nil)
+	assert.NoError(t, err)
+
+	status, result, err := doSomething.Wait(frame, func(frame *Frame) bool {
+		return true
+	})
 	assert.Equal(t, FrameStatusReturn, status)
 	assert.Nil(t, err)
 	assert.Equal(t, 456, result)
