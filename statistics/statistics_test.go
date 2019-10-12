@@ -1,8 +1,10 @@
 package statistics
 
 import (
+	"fmt"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -90,6 +92,25 @@ func TestStatistics_Flush(t *testing.T) {
 	assert.Equal(t, TypeCounter, item2.Type)
 	assert.Equal(t, "aa", item2.Tag)
 	assert.Equal(t, int32(2), item2.Counter)
+}
+
+func TestStatistics_Watch(t *testing.T) {
+	s := New()
+	s.Init(TypeCounter, "aa", "")
+
+	go func() {
+		for {
+			s.Incr("aa")
+			s.Incr("aa")
+			time.Sleep(time.Millisecond * 100)
+		}
+	}()
+
+	cancel := s.Watch(time.Millisecond*500, func(list []ReportItem) {
+		fmt.Printf("%+v\n", list)
+	})
+	time.Sleep(time.Second * 2)
+	cancel()
 }
 
 func BenchmarkStatistics_Counter(b *testing.B) {

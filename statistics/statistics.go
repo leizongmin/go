@@ -2,6 +2,7 @@ package statistics
 
 import (
 	"math"
+	"time"
 )
 
 //  计数器，得到 counter
@@ -177,4 +178,24 @@ func (s *Statistics) Flush() {
 		item.Data = nil
 		s.tags[k] = item
 	}
+}
+
+// 监听数据报告
+func (s *Statistics) Watch(interval time.Duration, callback func(list []ReportItem)) (cancel func()) {
+	ch := make(chan bool)
+	cancel = func() {
+		ch <- true
+	}
+	go func() {
+		for {
+			select {
+			case <-time.After(interval):
+				callback(s.Report(true))
+			case <-ch:
+				callback(s.Report(true))
+				break
+			}
+		}
+	}()
+	return cancel
 }
