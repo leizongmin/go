@@ -59,7 +59,7 @@ loop:
 }
 
 // 等待结束，如果收到指定信号则立刻返回
-func (w *WithTimeout) Wait(ch chan interface{}) (count int, isCancel bool) {
+func (w *WithTimeout) Wait(ch <-chan interface{}) (count int, isCancel bool) {
 loop:
 	for {
 		select {
@@ -81,6 +81,12 @@ loop:
 	}
 	// fmt.Printf("end %+v\n%+v\n", w, t)
 	return count, isCancel
+}
+
+// 无限等待结束
+func (w *WithTimeout) WaitInfinity() (count int) {
+	count, _ = w.Wait(make(chan interface{}))
+	return count
 }
 
 // 完成一个

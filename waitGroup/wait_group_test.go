@@ -88,3 +88,21 @@ func TestWithTimeout_Wait(t *testing.T) {
 	ch <- 1
 	time.Sleep(time.Millisecond * 100)
 }
+
+func TestWithTimeout_WaitInfinity(t *testing.T) {
+	wg := New()
+	wg.Init(5)
+	go func() {
+		sn := 1
+		wg.Reset(sn)
+		for i := 0; i < 5; i++ {
+			go func(i int) {
+				time.Sleep(time.Millisecond * 10 * time.Duration(i+1))
+				wg.Done(sn)
+			}(i)
+		}
+		count := wg.WaitInfinity()
+		assert.Equal(t, 5, count)
+	}()
+	time.Sleep(time.Millisecond * 100)
+}
