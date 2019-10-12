@@ -28,7 +28,7 @@ func TestStatistics_Add(t *testing.T) {
 	for _, v := range list {
 		s.Add("a", v)
 	}
-	ret := s.Report()
+	ret := s.Report(true)
 	item := ret[0]
 	assert.Equal(t, TypeSamples, item.Type)
 	assert.Equal(t, "a", item.Tag)
@@ -46,7 +46,7 @@ func TestStatistics_Add2(t *testing.T) {
 	for _, v := range list {
 		s.Add("a", v)
 	}
-	ret := s.Report()
+	ret := s.Report(true)
 	item := ret[0]
 	assert.Equal(t, TypeSamples, item.Type)
 	assert.Equal(t, "a", item.Tag)
@@ -64,11 +64,32 @@ func TestStatistics_Init(t *testing.T) {
 		i++
 		s.Incr("aa")
 	}
-	ret := s.Report()
+	ret := s.Report(true)
 	item := ret[0]
 	assert.Equal(t, TypeCounter, item.Type)
 	assert.Equal(t, "aa", item.Tag)
 	assert.Equal(t, int32(100), item.Counter)
+}
+
+func TestStatistics_Flush(t *testing.T) {
+	s := New()
+	s.Init(TypeCounter, "aa", "")
+
+	s.Incr("aa")
+	s.Incr("aa")
+	ret1 := s.Report(true)
+	item1 := ret1[0]
+	assert.Equal(t, TypeCounter, item1.Type)
+	assert.Equal(t, "aa", item1.Tag)
+	assert.Equal(t, int32(2), item1.Counter)
+
+	s.Incr("aa")
+	s.Incr("aa")
+	ret2 := s.Report(true)
+	item2 := ret2[0]
+	assert.Equal(t, TypeCounter, item2.Type)
+	assert.Equal(t, "aa", item2.Tag)
+	assert.Equal(t, int32(2), item2.Counter)
 }
 
 func BenchmarkStatistics_Counter(b *testing.B) {

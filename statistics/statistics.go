@@ -118,7 +118,7 @@ func (s *Statistics) Set(tag string, data interface{}) *Statistics {
 }
 
 // 获得当前报告
-func (s *Statistics) Report() []ReportItem {
+func (s *Statistics) Report(flush bool) []ReportItem {
 	list := make([]ReportItem, 0)
 	for tag, item := range s.tags {
 		if item.Type == "counter" {
@@ -161,16 +161,20 @@ func (s *Statistics) Report() []ReportItem {
 			})
 		}
 	}
+	if flush {
+		s.Flush()
+	}
 	return list
 }
 
 // 清空统计信息（一般与 report() 配合使用）
-func (s *Statistics) Flush(tag string, data interface{}) {
-	for _, item := range s.tags {
+func (s *Statistics) Flush() {
+	for k, item := range s.tags {
 		item.Counter = 0
 		item.Min = math.MaxInt32
 		item.Max = math.MinInt32
 		item.Avg = 0
 		item.Data = nil
+		s.tags[k] = item
 	}
 }
