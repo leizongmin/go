@@ -143,6 +143,10 @@ func escapeStringQuotes(buf []byte, v string) []byte {
 			buf[pos] = '\''
 			buf[pos+1] = '\''
 			pos += 2
+		} else if c == '\\' {
+			buf[pos] = '\\'
+			buf[pos+1] = '\\'
+			pos += 2
 		} else {
 			buf[pos] = c
 			pos++
