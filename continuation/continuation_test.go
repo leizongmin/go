@@ -7,26 +7,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/leizongmin/go-common-libs/typeUtils"
+	"github.com/leizongmin/go-common-libs/typeutil"
 )
 
 func TestNew(t *testing.T) {
 	doSomething := New().ContinueSegment(func(frame *Frame) {
 		fmt.Println("step1")
 		time.Sleep(time.Millisecond * 200)
-		local := typeUtils.MustToMap(frame.Local())
+		local := typeutil.MustToMap(frame.Local())
 		local["step1"] = true
 		frame.Next(local)
 	}).ContinueSegment(func(frame *Frame) {
 		fmt.Println("step2")
 		time.Sleep(time.Millisecond * 200)
-		local := typeUtils.MustToMap(frame.Local())
+		local := typeutil.MustToMap(frame.Local())
 		local["step2"] = true
 		frame.Next(local)
 	}).ContinueSegment(func(frame *Frame) {
 		fmt.Println("step3")
 		time.Sleep(time.Millisecond * 200)
-		local := typeUtils.MustToMap(frame.Local())
+		local := typeutil.MustToMap(frame.Local())
 		local["step3"] = true
 		frame.Next(local)
 	})
@@ -66,7 +66,7 @@ func TestNew(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Nil(t, err)
 
-	result2 := typeUtils.MustToMap(result)
+	result2 := typeutil.MustToMap(result)
 	assert.Equal(t, "world", result2["hello"])
 	assert.Equal(t, true, result2["step1"])
 	assert.Equal(t, true, result2["step2"])
@@ -75,7 +75,7 @@ func TestNew(t *testing.T) {
 
 func TestFrame_Yield(t *testing.T) {
 	doSomething := New().ContinueSegment(func(frame *Frame) {
-		count := typeUtils.MustToInt(frame.Local())
+		count := typeutil.MustToInt(frame.Local())
 		if count < 10 {
 			frame.Yield(count + 1)
 		} else {
