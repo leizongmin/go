@@ -19,12 +19,18 @@ func New() *gin.Engine {
 // 自定义响应处理函数
 var ResponseHandler func(c *Context, data interface{}, err error)
 
+type ResponseData struct {
+	OK    bool        `json:"ok"`
+	Error string      `json:"error,omitempty"`
+	Data  interface{} `json:"data,omitempty"`
+}
+
 func init() {
 	ResponseHandler = func(c *Context, data interface{}, err error) {
 		if err != nil {
-			c.JSON(500, H{"ok": false, "error": err.Error()})
+			c.JSON(500, &ResponseData{OK: false, Error: err.Error()})
 		} else {
-			c.JSON(200, H{"ok": true, "data": data})
+			c.JSON(200, &ResponseData{OK: true, Data: data})
 		}
 	}
 }
