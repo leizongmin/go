@@ -256,6 +256,26 @@ func (r *HttpResponse) JSON(data interface{}) error {
 	return jsoniter.Unmarshal(buf, data)
 }
 
+// Map响应体
+func (r *HttpResponse) Map() (map[string]interface{}, error) {
+	buf, err := r.Body()
+	if err != nil {
+		return nil, err
+	}
+	ret := make(map[string]interface{})
+	err = jsoniter.Unmarshal(buf, &ret)
+	return ret, err
+}
+
+// Map响应体，如果出错则panic
+func (r *HttpResponse) MustMap() map[string]interface{} {
+	ret, err := r.Map()
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
+
 // 关闭
 func (r *HttpResponse) Close() error {
 	return r.resp.Body.Close()
