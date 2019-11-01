@@ -32,4 +32,7 @@ func TestAny(t *testing.T) {
 	fmt.Println(c.Get(10))
 	fmt.Println(c.Get("a"))
 	fmt.Println(c.Get("b"))
+
+	assert.Equal(t, 123, Any(123).MustToInt())
+	assert.Equal(t, "xxx", Any("xxx").MustToString())
 }
