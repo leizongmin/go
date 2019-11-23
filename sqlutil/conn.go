@@ -2,9 +2,7 @@ package sqlutil
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
-	"net/url"
 	"sync/atomic"
 
 	"github.com/jmoiron/sqlx"
@@ -16,76 +14,33 @@ func incrQueueCounter() {
 	atomic.AddInt64(&queryCounter, 1)
 }
 
-type Options struct {
-	Host       string
-	Port       int
-	User       string
-	Password   string
-	Database   string
-	Charset    string
-	Timezone   string // +8:00
-	ParseTime  bool
-	AutoCommit bool
-	Params     map[string]string
-}
-
 type DB = sqlx.DB
 type Tx = sqlx.Tx
 
+type ConnectionOptions interface {
+	BuildDataSourceString() string
+}
+
 // 创建数据库连接
-func OpenWithOptions(driverName string, opts Options) (*sqlx.DB, error) {
-	return Open(driverName, BuildDataSourceString(opts))
+func OpenWithOptions(driverName string, opts ConnectionOptions) (*sqlx.DB, error) {
+	return Open(driverName, opts.BuildDataSourceString())
 }
 
 // 创建数据库连接
 func Open(driverName string, dataSourceName string) (*sqlx.DB, error) {
+	debugf("Open: %s %s", driverName, dataSourceName)
 	return sqlx.Open(driverName, dataSourceName)
 }
 
 // 创建数据库连接，如果失败则panic
-func MustOpenWithOptions(driverName string, opts Options) *sqlx.DB {
-	return MustOpen(driverName, BuildDataSourceString(opts))
+func MustOpenWithOptions(driverName string, opts ConnectionOptions) *sqlx.DB {
+	return MustOpen(driverName, opts.BuildDataSourceString())
 }
 
 // 创建数据库连接，如果失败则panic
 func MustOpen(driverName string, dataSourceName string) *sqlx.DB {
+	debugf("MustOpen: %s %s", driverName, dataSourceName)
 	return sqlx.MustOpen(driverName, dataSourceName)
-}
-
-// 构建连接字符串
-func BuildDataSourceString(opts Options) string {
-	if opts.Host == "" {
-		opts.Host = "127.0.0.1"
-	}
-	if opts.Port == 0 {
-		opts.Port = 3306
-	}
-	if opts.User == "" {
-		opts.User = "root"
-	}
-	str := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?",
-		opts.User,
-		opts.Password,
-		opts.Host,
-		opts.Port,
-		opts.Database,
-	)
-	if opts.ParseTime {
-		str += "&parseTime=true&loc=Local"
-	}
-	if opts.Charset != "" {
-		str += "&charset=" + opts.Charset
-	}
-	if opts.Timezone != "" {
-		str += "&time_zone=" + url.QueryEscape("'"+opts.Timezone+"'")
-	}
-	if opts.AutoCommit {
-		str += "&autocommit=true"
-	}
-	for k, v := range opts.Params {
-		str += "&" + k + "=" + url.QueryEscape(v)
-	}
-	return str
 }
 
 type AbstractDBBase interface {

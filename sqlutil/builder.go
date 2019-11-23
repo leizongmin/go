@@ -1,6 +1,7 @@
-package sqlbuilder
+package sqlutil
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"log"
 	"sort"
@@ -9,6 +10,7 @@ import (
 )
 
 type QueryBuilder struct {
+	quoteIdentifier      func(string) string
 	loc                  *time.Location
 	tableName            string
 	tableNameEscaped     string
@@ -29,6 +31,7 @@ type QueryBuilder struct {
 	mapAliasToTable      map[string]string
 	currentJoinTableName string
 	joinTables           []joinTableItem
+	quoteLiteral         func([]byte, string) []byte
 }
 
 type joinTableItem struct {
@@ -38,8 +41,6 @@ type joinTableItem struct {
 	on       string
 	alias    string
 }
-
-type Row = map[string]interface{}
 
 const JOIN = "JOIN"
 const LEFT_JOIN = "LEFT JOIN"
@@ -66,19 +67,26 @@ func GetDefaultLocation() *time.Location {
 }
 
 func Table(tableName string) *QueryBuilder {
-	return newEmptyQuery().Table(tableName)
+	return NewEmptyQuery().Table(tableName)
 }
 
-func newEmptyQuery() *QueryBuilder {
+func NewEmptyQuery() *QueryBuilder {
 	return &QueryBuilder{
 		loc: defaultLocation,
 	}
+}
+
+func (q *QueryBuilder) Init(quoteIdentifier func(id string) string, quoteLiteral func([]byte, string) []byte) *QueryBuilder {
+	q.quoteIdentifier = quoteIdentifier
+	q.quoteLiteral = quoteLiteral
+	return q
 }
 
 func (q *QueryBuilder) Clone() *QueryBuilder {
 	// mapTableToAlias      map[string]string
 	// mapAliasToTable      map[string]string
 	ret := &QueryBuilder{
+		quoteIdentifier:      q.quoteIdentifier,
 		loc:                  q.loc,
 		tableName:            q.tableName,
 		tableNameEscaped:     q.tableNameEscaped,
@@ -113,16 +121,29 @@ func (q *QueryBuilder) Clone() *QueryBuilder {
 	return ret
 }
 
+func (q *QueryBuilder) QuoteIdentifier(id string) string {
+	if q.quoteIdentifier == nil {
+		return id
+	}
+	if id == "*" {
+		return id
+	}
+	if strings.IndexByte(id, '(') != -1 {
+		return id
+	}
+	return q.quoteIdentifier(id)
+}
+
 func (q *QueryBuilder) Location(loc *time.Location) *QueryBuilder {
 	q.loc = loc
 	return q
 }
 
-func (q *QueryBuilder) Format(query string, args ...Value) string {
+func (q *QueryBuilder) Format(query string, args ...driver.Value) string {
 	if len(args) < 1 {
 		return query
 	}
-	ret, err := InterpolateParams(query, args, q.loc)
+	ret, err := InterpolateParams(query, args, q.loc, q.quoteLiteral)
 	if err != nil {
 		log.Println(err)
 		return query
@@ -158,7 +179,7 @@ func (q *QueryBuilder) SelectDistinct(fields ...string) *QueryBuilder {
 }
 
 func (q *QueryBuilder) Count(field string) *QueryBuilder {
-	return q.Select("COUNT(" + field + ") AS `count`")
+	return q.Select("COUNT(" + field + ") AS " + q.QuoteIdentifier("count"))
 }
 
 func (q *QueryBuilder) Delete() *QueryBuilder {
@@ -178,7 +199,7 @@ func (q *QueryBuilder) Insert(row Row) *QueryBuilder {
 		values = append(values, q.Format("?", row[k]))
 	}
 	for i, k := range fields {
-		fields[i] = EscapeID(k)
+		fields[i] = q.QuoteIdentifier(k)
 	}
 	q.insertRows = 1
 	q.insert = fmt.Sprintf("(%s) VALUES (%s)", strings.Join(fields, ", "), strings.Join(values, ", "))
@@ -206,7 +227,7 @@ func (q *QueryBuilder) InsertMany(rows []Row) *QueryBuilder {
 		lines = append(lines, fmt.Sprintf("(%s)", strings.Join(values, ", ")))
 	}
 	for i, k := range fields {
-		fields[i] = EscapeID(k)
+		fields[i] = q.QuoteIdentifier(k)
 	}
 	q.insertRows = len(rows)
 	q.insert = fmt.Sprintf("(%s) VALUES %s", strings.Join(fields, ", "), strings.Join(lines, ", "))
@@ -215,7 +236,7 @@ func (q *QueryBuilder) InsertMany(rows []Row) *QueryBuilder {
 
 func (q *QueryBuilder) Table(tableName string) *QueryBuilder {
 	q.tableName = tableName
-	q.tableNameEscaped = EscapeID(tableName)
+	q.tableNameEscaped = q.QuoteIdentifier(tableName)
 	return q
 }
 
@@ -270,18 +291,18 @@ func (q *QueryBuilder) InnerJoin(tableName string, fields ...string) *QueryBuild
 	return q.addJoinTable(tableName, INNER_JOIN, fields, "")
 }
 
-func (q *QueryBuilder) On(condition string, args ...Value) *QueryBuilder {
+func (q *QueryBuilder) On(condition string, args ...driver.Value) *QueryBuilder {
 	last := q.joinTables[len(q.joinTables)-1]
 	last.on = q.Format(condition, args...)
 	q.joinTables[len(q.joinTables)-1] = last
 	return q
 }
 
-func (q *QueryBuilder) Where(query string, args ...Value) *QueryBuilder {
+func (q *QueryBuilder) Where(query string, args ...driver.Value) *QueryBuilder {
 	return q.And(query, args...)
 }
 
-func (q *QueryBuilder) And(query string, args ...Value) *QueryBuilder {
+func (q *QueryBuilder) And(query string, args ...driver.Value) *QueryBuilder {
 	q.conditions = append(q.conditions, q.Format(query, args...))
 	return q
 }
@@ -297,12 +318,12 @@ func (q *QueryBuilder) AndRow(row Row) *QueryBuilder {
 	}
 	sort.Strings(fields)
 	for _, k := range fields {
-		q.And(EscapeID(k)+"=?", row[k])
+		q.And(q.QuoteIdentifier(k)+"=?", row[k])
 	}
 	return q
 }
 
-func (q *QueryBuilder) Set(update string, args ...Value) *QueryBuilder {
+func (q *QueryBuilder) Set(update string, args ...driver.Value) *QueryBuilder {
 	q.update = append(q.update, q.Format(update, args...))
 	return q
 }
@@ -314,23 +335,23 @@ func (q *QueryBuilder) SetRow(row Row) *QueryBuilder {
 	}
 	sort.Strings(fields)
 	for _, k := range fields {
-		q.Set(EscapeID(k)+"=?", row[k])
+		q.Set(q.QuoteIdentifier(k)+"=?", row[k])
 	}
 	return q
 }
 
-func (q *QueryBuilder) OrderBy(tpl string, args ...Value) *QueryBuilder {
+func (q *QueryBuilder) OrderBy(tpl string, args ...driver.Value) *QueryBuilder {
 	q.orderFields = q.Format(tpl, args...)
 	q.orderBy = "ORDER BY " + q.orderFields
 	return q
 }
 
-func (q *QueryBuilder) GroupBy(tpl string, args ...Value) *QueryBuilder {
+func (q *QueryBuilder) GroupBy(tpl string, args ...driver.Value) *QueryBuilder {
 	q.groupBy = "GROUP BY " + q.Format(tpl, args...)
 	return q
 }
 
-func (q *QueryBuilder) Having(tpl string, args ...Value) *QueryBuilder {
+func (q *QueryBuilder) Having(tpl string, args ...driver.Value) *QueryBuilder {
 	q.groupBy += " HAVING " + q.Format(tpl, args...)
 	return q
 }
@@ -378,10 +399,10 @@ func (q *QueryBuilder) buildSelect(where string) string {
 	var join []string
 	if len(q.joinTables) > 0 {
 		for _, item := range q.joinTables {
-			str := item.joinType + " " + EscapeID(item.table)
+			str := item.joinType + " " + q.QuoteIdentifier(item.table)
 			a, ok := q.mapTableToAlias[item.table]
 			if ok {
-				str += " AS " + EscapeID(a)
+				str += " AS " + q.QuoteIdentifier(a)
 			} else {
 				a = item.table
 			}
@@ -398,24 +419,32 @@ func (q *QueryBuilder) buildSelect(where string) string {
 		q.fields = append(q.fields, "*")
 	}
 	for i, v := range q.fields {
-		q.fields[i] = EscapeID(v)
+		q.fields[i] = q.QuoteIdentifier(v)
 	}
 	tail := sqlTailString(strings.Join(join, " "), where, q.groupBy, q.orderBy, q.limit)
 	table := q.tableNameEscaped
 	if q.mapTableToAlias != nil && len(q.mapTableToAlias[q.tableName]) > 0 {
-		table += " AS " + EscapeID(q.mapTableToAlias[q.tableName])
+		table += " AS " + q.QuoteIdentifier(q.mapTableToAlias[q.tableName])
 	}
 	return fmt.Sprintf("%s %s FROM %s %s", q.queryType, strings.Join(q.fields, ", "), table, tail)
 }
 
-func Custom(query string, args ...Value) string {
-	if len(args) < 1 {
-		return strings.Trim(query, " ")
+func sqlLimitString(offset int, limit int) string {
+	if limit > 0 {
+		if offset > 0 {
+			return fmt.Sprintf("LIMIT %d,%d", offset, limit)
+		}
+		return fmt.Sprintf("LIMIT %d", limit)
 	}
-	ret, err := InterpolateParams(query, args, defaultLocation)
-	if err != nil {
-		log.Println(err)
-		return query
+	return fmt.Sprintf("LIMIT %d,18446744073709551615", offset)
+}
+
+func sqlTailString(list ...string) string {
+	var ret string
+	for _, s := range list {
+		if len(s) > 0 {
+			ret += " " + strings.Trim(s, " ")
+		}
 	}
 	return strings.Trim(ret, " ")
 }

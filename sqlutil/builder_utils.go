@@ -1,9 +1,8 @@
-package sqlbuilder
+package sqlutil
 
 import (
 	"database/sql/driver"
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -12,9 +11,11 @@ import (
 const digits01 = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"
 const digits10 = "0000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999"
 
-type Value = driver.Value
+func InterpolateParams(query string, args []driver.Value, loc *time.Location, quoteLiteral func([]byte, string) []byte) (string, error) {
+	if quoteLiteral == nil {
+		quoteLiteral = defaultQuoteLiteral
+	}
 
-func InterpolateParams(query string, args []Value, loc *time.Location) (string, error) {
 	// Number of ? should be same to len(args)
 	if strings.Count(query, "?") != len(args) {
 		return "", driver.ErrSkip
@@ -119,9 +120,7 @@ func InterpolateParams(query string, args []Value, loc *time.Location) (string, 
 				buf = append(buf, "')"...)
 			}
 		case string:
-			buf = append(buf, '\'')
-			buf = escapeStringQuotes(buf, v)
-			buf = append(buf, '\'')
+			buf = quoteLiteral(buf, v)
 		default:
 			return "", driver.ErrSkip
 		}
@@ -132,7 +131,13 @@ func InterpolateParams(query string, args []Value, loc *time.Location) (string, 
 	return string(buf), nil
 }
 
-// escapeStringQuotes is similar to escapeBytesQuotes but for string.
+func defaultQuoteLiteral(buf []byte, v string) []byte {
+	buf = append(buf, '\'')
+	buf = escapeStringQuotes(buf, v)
+	buf = append(buf, '\'')
+	return buf
+}
+
 func escapeStringQuotes(buf []byte, v string) []byte {
 	pos := len(buf)
 	buf = reserveBuffer(buf, len(v)*2)
@@ -167,150 +172,4 @@ func reserveBuffer(buf []byte, appendSize int) []byte {
 		buf = newBuf
 	}
 	return buf[:newSize]
-}
-
-// escapeBytesBackslash escapes []byte with backslashes (\)
-// This escapes the contents of a string (provided as []byte) by adding backslashes before special
-// characters, and turning others into specific escape sequences, such as
-// turning newlines into \n and null bytes into \0.
-// https://github.com/mysql/mysql-server/blob/mysql-5.7.5/mysys/charset.c#L823-L932
-func escapeBytesBackslash(buf, v []byte) []byte {
-	pos := len(buf)
-	buf = reserveBuffer(buf, len(v)*2)
-
-	for _, c := range v {
-		switch c {
-		case '\x00':
-			buf[pos] = '\\'
-			buf[pos+1] = '0'
-			pos += 2
-		case '\n':
-			buf[pos] = '\\'
-			buf[pos+1] = 'n'
-			pos += 2
-		case '\r':
-			buf[pos] = '\\'
-			buf[pos+1] = 'r'
-			pos += 2
-		case '\x1a':
-			buf[pos] = '\\'
-			buf[pos+1] = 'Z'
-			pos += 2
-		case '\'':
-			buf[pos] = '\\'
-			buf[pos+1] = '\''
-			pos += 2
-		case '"':
-			buf[pos] = '\\'
-			buf[pos+1] = '"'
-			pos += 2
-		case '\\':
-			buf[pos] = '\\'
-			buf[pos+1] = '\\'
-			pos += 2
-		default:
-			buf[pos] = c
-			pos++
-		}
-	}
-
-	return buf[:pos]
-}
-
-// escapeStringBackslash is similar to escapeBytesBackslash but for string.
-func escapeStringBackslash(buf []byte, v string) []byte {
-	pos := len(buf)
-	buf = reserveBuffer(buf, len(v)*2)
-
-	for i := 0; i < len(v); i++ {
-		c := v[i]
-		switch c {
-		case '\x00':
-			buf[pos] = '\\'
-			buf[pos+1] = '0'
-			pos += 2
-		case '\n':
-			buf[pos] = '\\'
-			buf[pos+1] = 'n'
-			pos += 2
-		case '\r':
-			buf[pos] = '\\'
-			buf[pos+1] = 'r'
-			pos += 2
-		case '\x1a':
-			buf[pos] = '\\'
-			buf[pos+1] = 'Z'
-			pos += 2
-		case '\'':
-			buf[pos] = '\\'
-			buf[pos+1] = '\''
-			pos += 2
-		case '"':
-			buf[pos] = '\\'
-			buf[pos+1] = '"'
-			pos += 2
-		case '\\':
-			buf[pos] = '\\'
-			buf[pos+1] = '\\'
-			pos += 2
-		default:
-			buf[pos] = c
-			pos++
-		}
-	}
-
-	return buf[:pos]
-}
-
-// escapeBytesQuotes escapes apostrophes in []byte by doubling them up.
-// This escapes the contents of a string by doubling up any apostrophes that
-// it contains. This is used when the NO_BACKSLASH_ESCAPES SQL_MODE is in
-// effect on the server.
-// https://github.com/mysql/mysql-server/blob/mysql-5.7.5/mysys/charset.c#L963-L1038
-func escapeBytesQuotes(buf, v []byte) []byte {
-	pos := len(buf)
-	buf = reserveBuffer(buf, len(v)*2)
-
-	for _, c := range v {
-		if c == '\'' {
-			buf[pos] = '\''
-			buf[pos+1] = '\''
-			pos += 2
-		} else {
-			buf[pos] = c
-			pos++
-		}
-	}
-
-	return buf[:pos]
-}
-
-func sqlLimitString(offset int, limit int) string {
-	if limit > 0 {
-		if offset > 0 {
-			return fmt.Sprintf("LIMIT %d,%d", offset, limit)
-		}
-		return fmt.Sprintf("LIMIT %d", limit)
-	}
-	return fmt.Sprintf("LIMIT %d,18446744073709551615", offset)
-}
-
-func sqlTailString(list ...string) string {
-	var ret string
-	for _, s := range list {
-		if len(s) > 0 {
-			ret += " " + strings.Trim(s, " ")
-		}
-	}
-	return strings.Trim(ret, " ")
-}
-
-func EscapeID(id string) string {
-	if id == "*" {
-		return id
-	}
-	if strings.IndexByte(id, '(') != -1 {
-		return id
-	}
-	return "`" + strings.Replace(strings.Replace(id, "`", "``", -1), ".", "`.`", -1) + "`"
 }

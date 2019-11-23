@@ -8,26 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildDataSourceString(t *testing.T) {
-	str := BuildDataSourceString(Options{
-		Host:       "127.0.0.1",
-		Port:       3306,
-		User:       "root",
-		Password:   "123",
-		Database:   "xxx",
-		Charset:    "utf8mb4",
-		Timezone:   "+8:00",
-		ParseTime:  true,
-		AutoCommit: true,
-		Params:     nil,
-	})
-	fmt.Println(str)
-	assert.Equal(t, "root:123@tcp(127.0.0.1:3306)/xxx?&parseTime=true&loc=Local&charset=utf8mb4&time_zone=%27%2B8%3A00%27&autocommit=true", str)
-}
-
 func TestFindMany(t *testing.T) {
 	EnableDebug()
-	db, err := Open("mysql", BuildDataSourceString(Options{Database: "mysql"}))
+	db, err := Open("mysql", "root:@tcp(localhost:3306)/mysql")
 	assert.NoError(t, err)
 	fmt.Printf("%+v\n", db)
 
