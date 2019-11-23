@@ -47,13 +47,30 @@ func Load(ext string, data []byte, v interface{}) error {
 }
 
 // 加载指定文件的配置
+// 如果文件名为 .* 结尾，则表示依次尝试加载支持的文件扩展名
 func LoadFile(file string, v interface{}) error {
+	ext := filepath.Ext(file)
+	if ext == ".*" {
+		baseName := file[:len(file)-2]
+		for x := range Extensions {
+			f := baseName + "." + x
+			info, err := os.Stat(f)
+			if err != nil {
+				continue
+			}
+			if info.IsDir() {
+				continue
+			}
+			file = f
+			ext = "." + x
+		}
+	}
+
 	f, err := os.Open(file)
 	if err != nil {
 		return err
 	}
-	ext := filepath.Ext(file)
-	return LoadReader(ext, f, v)
+	return LoadFromReader(ext, f, v)
 }
 
 // 加载指定文件的配置，如果出错则panic
@@ -64,7 +81,7 @@ func MustLoadFile(file string, v interface{}) {
 }
 
 // 指定扩展名和Reader，加载配置
-func LoadReader(ext string, reader io.Reader, v interface{}) error {
+func LoadFromReader(ext string, reader io.Reader, v interface{}) error {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return err
