@@ -31,4 +31,8 @@ func TestFindMany(t *testing.T) {
 		err = rows.MapScan(result)
 		fmt.Println(result)
 	}
+
+	list = []Row{}
+	ok = Query(tx, &list, "SHOW TABLES")
+	fmt.Printf("%v %+v\n", ok, list)
 }

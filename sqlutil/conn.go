@@ -84,6 +84,35 @@ func warningf(format string, args ...interface{}) {
 
 type Row = map[string]interface{}
 
+// 执行查询，无返回结果
+func Exec(tx AbstractDBBase, query string, args ...interface{}) (success bool) {
+	incrQueueCounter()
+	var err error
+	debugf("#%d Exec: %s %+v", queryCounter, query, args)
+	_, err = tx.Exec(query, args...)
+	if err != nil {
+		warningf("#%d Exec failed: %s => %s %+v", queryCounter, err, query, args)
+		return false
+	}
+	return true
+}
+
+// 执行查询，有返回结果
+func Query(tx AbstractDBBase, dest interface{}, query string, args ...interface{}) (success bool) {
+	incrQueueCounter()
+	debugf("#%d Query: %s %+v", queryCounter, query, args)
+	err := tx.Get(dest, query, args...)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			warningf("#%d Query failed: %s => %s %+v", queryCounter, err, query, args)
+		}
+		debugf("#%d Query: success=false", queryCounter)
+		return false
+	}
+	debugf("#%d Query: success=true", queryCounter)
+	return true
+}
+
 // 查询一条数据
 func FindOne(tx AbstractDBBase, dest interface{}, query string, args ...interface{}) (success bool) {
 	incrQueueCounter()
@@ -136,19 +165,6 @@ func InsertOne(tx AbstractDBBase, query string, args ...interface{}) (insertId i
 	return insertId, true
 }
 
-// 插入一条数据，不返回insertId
-func InsertOne2(tx AbstractDBBase, query string, args ...interface{}) (success bool) {
-	incrQueueCounter()
-	var err error
-	debugf("#%d InsertOne: %s %+v", queryCounter, query, args)
-	_, err = tx.Exec(query, args...)
-	if err != nil {
-		warningf("#%d InsertOne failed: %s => %s %+v", queryCounter, err, query, args)
-		return false
-	}
-	return true
-}
-
 // 插入多条记录
 func InsertMany(tx AbstractDBBase, query string, args ...interface{}) (lastInsertId int64, success bool) {
 	incrQueueCounter()
@@ -167,19 +183,6 @@ func InsertMany(tx AbstractDBBase, query string, args ...interface{}) (lastInser
 	lastInsertId = id
 	debugf("#%d InsertOne: insertId=%d", queryCounter, lastInsertId)
 	return lastInsertId, true
-}
-
-// 插入多条记录，不返回insertId
-func InsertMany2(tx AbstractDBBase, query string, args ...interface{}) (success bool) {
-	incrQueueCounter()
-	var err error
-	debugf("#%d InsertOne: %s %+v", queryCounter, query, args)
-	_, err = tx.Exec(query, args...)
-	if err != nil {
-		warningf("#%d InsertOne failed: %s => %s %+v", queryCounter, err, query, args)
-		return false
-	}
-	return true
 }
 
 // 更新多条数据
