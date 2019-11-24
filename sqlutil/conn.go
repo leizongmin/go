@@ -85,16 +85,21 @@ func warningf(format string, args ...interface{}) {
 type Row = map[string]interface{}
 
 // 执行查询，无返回结果
-func Exec(tx AbstractDBBase, query string, args ...interface{}) (success bool) {
+func Exec(tx AbstractDBBase, query string, args ...interface{}) (rowsAffected int64, success bool) {
 	incrQueueCounter()
-	var err error
 	debugf("#%d Exec: %s %+v", queryCounter, query, args)
-	_, err = tx.Exec(query, args...)
+	res, err := tx.Exec(query, args...)
 	if err != nil {
-		warningf("#%d Exec failed: %s => %s %+v", queryCounter, err, query, args)
-		return false
+		warningf("Exec failed: %s => %s %+v", err, query, args)
+		return 0, false
 	}
-	return true
+	rows, err := res.RowsAffected()
+	if err != nil {
+		warningf("Exec failed: %s => %s %+v", err, query, args)
+	}
+	rowsAffected = rows
+	debugf("#%d Exec: rowsAffected=%d", queryCounter, rowsAffected)
+	return rowsAffected, true
 }
 
 // 执行查询，有返回结果
