@@ -102,6 +102,26 @@ func Exec(tx AbstractDBBase, query string, args ...interface{}) (rowsAffected in
 	return rowsAffected, true
 }
 
+// 执行插入记录查询，返回最后插入ID
+func ExecInsert(tx AbstractDBBase, query string, args ...interface{}) (lastInsertId int64, success bool) {
+	incrQueueCounter()
+	var err error
+	var res sql.Result
+	debugf("#%d ExecInsert: %s %+v", queryCounter, query, args)
+	res, err = tx.Exec(query, args...)
+	if err != nil {
+		warningf("#%d ExecInsert failed: %s => %s %+v", queryCounter, err, query, args)
+		return 0, false
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		warningf("#%d ExecInsert failed: %s => %s %+v", queryCounter, err, query, args)
+	}
+	lastInsertId = id
+	debugf("#%d ExecInsert: insertId=%d", queryCounter, lastInsertId)
+	return lastInsertId, true
+}
+
 // 执行查询，有一行返回结果
 func QueryOne(tx AbstractDBBase, dest interface{}, query string, args ...interface{}) (success bool) {
 	incrQueueCounter()
