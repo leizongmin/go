@@ -59,9 +59,9 @@ func InterpolateParams(query string, args []driver.Value, loc *time.Location, qu
 			buf = strconv.AppendFloat(buf, v, 'g', -1, 64)
 		case bool:
 			if v {
-				buf = append(buf, '1')
+				buf = append(buf, []byte("TRUE")...)
 			} else {
-				buf = append(buf, '0')
+				buf = append(buf, []byte("FALSE")...)
 			}
 		case time.Time:
 			if v.IsZero() {
