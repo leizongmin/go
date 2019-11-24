@@ -393,7 +393,7 @@ func (q *QueryBuilder) Build() string {
 		sql = q.buildSelect(where)
 	case UPDATE:
 		tail := sqlTailString(where, q.orderBy, q.limit)
-		sql = fmt.Sprintf("UPDATE %s SET %s %s", q.tableNameEscaped, strings.Join(q.update, ", "), tail)
+		sql = q.buildUpdate(tail)
 	case INSERT:
 		sql = q.buildInsert(where)
 	case INSERT_OR_UPDATE:
@@ -443,6 +443,18 @@ func (q *QueryBuilder) buildSelect(where string) string {
 
 func (q *QueryBuilder) buildInsert(where string) string {
 	sql := fmt.Sprintf("INSERT INTO %s %s", q.tableNameEscaped, q.insert)
+	if len(q.returningFields) > 0 {
+		for i, v := range q.returningFields {
+			q.returningFields[i] = q.QuoteIdentifier(v)
+		}
+		tail := strings.Join(q.returningFields, ", ")
+		sql += " RETURNING " + tail
+	}
+	return sql
+}
+
+func (q *QueryBuilder) buildUpdate(tail string) string {
+	sql := fmt.Sprintf("UPDATE %s SET %s %s", q.tableNameEscaped, strings.Join(q.update, ", "), tail)
 	if len(q.returningFields) > 0 {
 		for i, v := range q.returningFields {
 			q.returningFields[i] = q.QuoteIdentifier(v)

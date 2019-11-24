@@ -104,6 +104,15 @@ func TestTable(t *testing.T) {
 		assert.Equal(t, "UPDATE test SET a=123, b=456, c='xxx' WHERE a=999 LIMIT 10", sql)
 	}
 	{
+		sql := Table("test").Update().SetRow(Row{
+			"a": 123,
+			"b": 456,
+			"c": "xxx",
+		}).Where("a=?", 999).ReturningAll().Build()
+		fmt.Println(sql)
+		assert.Equal(t, "UPDATE test SET a=123, b=456, c='xxx' WHERE a=999 RETURNING *", sql)
+	}
+	{
 		sql := Table("test").Select("a", "b").LeftJoin("test2", "c").Build()
 		fmt.Println(sql)
 		assert.Equal(t, "SELECT a, b, c FROM test LEFT JOIN test2", sql)
