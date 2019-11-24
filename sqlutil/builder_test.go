@@ -35,7 +35,7 @@ func TestTable(t *testing.T) {
 			"c": true,
 		}).Build()
 		fmt.Println(sql)
-		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', 1)", sql)
+		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE)", sql)
 	}
 	{
 		sql := Table("test").InsertMany([]Row{
@@ -50,7 +50,7 @@ func TestTable(t *testing.T) {
 			},
 		}).Build()
 		fmt.Println(sql)
-		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', 1), (NULL, 'current_timestamp()', 666)", sql)
+		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE), (NULL, 'current_timestamp()', 666)", sql)
 	}
 	{
 		sql := Table("test").Insert(Row{
@@ -59,7 +59,25 @@ func TestTable(t *testing.T) {
 			"c": true,
 		}).OnDuplicateKeyUpdate().Build()
 		fmt.Println(sql)
-		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', 1) ON DUPLICATE KEY UPDATE", sql)
+		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE) ON DUPLICATE KEY UPDATE", sql)
+	}
+	{
+		sql := Table("test").Insert(Row{
+			"a": 123,
+			"b": `'ok'`,
+			"c": true,
+		}).ReturningAll().Build()
+		fmt.Println(sql)
+		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE) RETURNING *", sql)
+	}
+	{
+		sql := Table("test").Insert(Row{
+			"a": 123,
+			"b": `'ok'`,
+			"c": true,
+		}).Returning("a", "b", "c").Build()
+		fmt.Println(sql)
+		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE) RETURNING a, b, c", sql)
 	}
 	{
 		sql := Table("test").Count("*").Build()
@@ -69,7 +87,7 @@ func TestTable(t *testing.T) {
 	{
 		sql := Table("test").Delete().Where("a=?", true).Limit(1).Build()
 		fmt.Println(sql)
-		assert.Equal(t, "DELETE FROM test WHERE a=1 LIMIT 1", sql)
+		assert.Equal(t, "DELETE FROM test WHERE a=TRUE LIMIT 1", sql)
 	}
 	{
 		sql := Table("test").Update().Set("a=?, b=?", 123, 456).Set("c=now()").Where("a=?", 999).Limit(10).Build()

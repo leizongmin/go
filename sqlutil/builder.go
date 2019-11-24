@@ -32,6 +32,7 @@ type QueryBuilder struct {
 	currentJoinTableName string
 	joinTables           []joinTableItem
 	quoteLiteral         func([]byte, string) []byte
+	returningFields      []string
 }
 
 type joinTableItem struct {
@@ -103,6 +104,7 @@ func (q *QueryBuilder) Clone() *QueryBuilder {
 		currentJoinTableName: q.currentJoinTableName,
 	}
 	copy(ret.fields, q.fields)
+	copy(ret.returningFields, q.returningFields)
 	copy(ret.conditions, q.conditions)
 	copy(ret.update, q.update)
 	copy(ret.joinTables, q.joinTables)
@@ -368,6 +370,16 @@ func (q *QueryBuilder) Limit(n int) *QueryBuilder {
 	return q
 }
 
+func (q *QueryBuilder) Returning(fields ...string) *QueryBuilder {
+	q.returningFields = append(q.returningFields, fields...)
+	return q
+}
+
+func (q *QueryBuilder) ReturningAll() *QueryBuilder {
+	q.returningFields = append(q.returningFields, "*")
+	return q
+}
+
 func (q *QueryBuilder) Build() string {
 	where := ""
 	if len(q.conditions) > 0 {
@@ -383,7 +395,7 @@ func (q *QueryBuilder) Build() string {
 		tail := sqlTailString(where, q.orderBy, q.limit)
 		sql = fmt.Sprintf("UPDATE %s SET %s %s", q.tableNameEscaped, strings.Join(q.update, ", "), tail)
 	case INSERT:
-		sql = fmt.Sprintf("INSERT INTO %s %s", q.tableNameEscaped, q.insert)
+		sql = q.buildInsert(where)
 	case INSERT_OR_UPDATE:
 		sql = fmt.Sprintf("INSERT INTO %s %s ON DUPLICATE KEY UPDATE %s", q.tableNameEscaped, q.insert, strings.Join(q.update, ", "))
 	case DELETE:
@@ -427,6 +439,18 @@ func (q *QueryBuilder) buildSelect(where string) string {
 		table += " AS " + q.QuoteIdentifier(q.mapTableToAlias[q.tableName])
 	}
 	return fmt.Sprintf("%s %s FROM %s %s", q.queryType, strings.Join(q.fields, ", "), table, tail)
+}
+
+func (q *QueryBuilder) buildInsert(where string) string {
+	sql := fmt.Sprintf("INSERT INTO %s %s", q.tableNameEscaped, q.insert)
+	if len(q.returningFields) > 0 {
+		for i, v := range q.returningFields {
+			q.returningFields[i] = q.QuoteIdentifier(v)
+		}
+		tail := strings.Join(q.returningFields, ", ")
+		sql += " RETURNING " + tail
+	}
+	return sql
 }
 
 func sqlLimitString(offset int, limit int) string {
