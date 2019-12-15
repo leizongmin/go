@@ -33,6 +33,7 @@ type QueryBuilder struct {
 	joinTables           []joinTableItem
 	quoteLiteral         func([]byte, string) []byte
 	returningFields      []string
+	conflictKey          string
 }
 
 type joinTableItem struct {
@@ -53,7 +54,8 @@ const SELECT_DISTINCT = "SELECT DISTINCT"
 const UPDATE = "UPDATE"
 const INSERT = "INSERT"
 const DELETE = "DELETE"
-const INSERT_OR_UPDATE = "INSERT_OR_UPDATE"
+const INSERT_OR_UPDATE_DUPLICATE = "INSERT_OR_UPDATE_DUPLICATE"
+const INSERT_OR_UPDATE_CONFLICT = "INSERT_OR_UPDATE_CONFLICT"
 
 var defaultLocation = time.Local
 
@@ -102,6 +104,7 @@ func (q *QueryBuilder) Clone() *QueryBuilder {
 		limitRows:            q.limitRows,
 		limit:                q.limit,
 		currentJoinTableName: q.currentJoinTableName,
+		conflictKey:          q.conflictKey,
 	}
 	copy(ret.fields, q.fields)
 	copy(ret.returningFields, q.returningFields)
@@ -159,7 +162,13 @@ func (q *QueryBuilder) Update() *QueryBuilder {
 }
 
 func (q *QueryBuilder) OnDuplicateKeyUpdate() *QueryBuilder {
-	q.queryType = INSERT_OR_UPDATE
+	q.queryType = INSERT_OR_UPDATE_DUPLICATE
+	return q
+}
+
+func (q *QueryBuilder) OnConflictDoUpdate(key string) *QueryBuilder {
+	q.queryType = INSERT_OR_UPDATE_CONFLICT
+	q.conflictKey = key
 	return q
 }
 
@@ -396,8 +405,10 @@ func (q *QueryBuilder) Build() string {
 		sql = q.buildUpdate(tail)
 	case INSERT:
 		sql = q.buildInsert(where)
-	case INSERT_OR_UPDATE:
+	case INSERT_OR_UPDATE_DUPLICATE:
 		sql = fmt.Sprintf("INSERT INTO %s %s ON DUPLICATE KEY UPDATE %s", q.tableNameEscaped, q.insert, strings.Join(q.update, ", "))
+	case INSERT_OR_UPDATE_CONFLICT:
+		sql = fmt.Sprintf("INSERT INTO %s %s ON CONFLICT(%s) DO UPDATE SET %s", q.tableNameEscaped, q.insert, q.conflictKey, strings.Join(q.update, ", "))
 	case DELETE:
 		tail := sqlTailString(where, q.orderBy, q.limit)
 		sql = fmt.Sprintf("DELETE FROM %s %s", q.tableNameEscaped, tail)

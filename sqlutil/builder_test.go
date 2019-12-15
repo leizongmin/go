@@ -57,9 +57,24 @@ func TestTable(t *testing.T) {
 			"a": 123,
 			"b": `'ok'`,
 			"c": true,
-		}).OnDuplicateKeyUpdate().Build()
+		}).OnDuplicateKeyUpdate().SetRow(Row{
+			"b": false,
+			"c": true,
+		}).Build()
 		fmt.Println(sql)
-		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE) ON DUPLICATE KEY UPDATE", sql)
+		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE) ON DUPLICATE KEY UPDATE b=FALSE, c=TRUE", sql)
+	}
+	{
+		sql := Table("test").Insert(Row{
+			"a": 123,
+			"b": `'ok'`,
+			"c": true,
+		}).OnConflictDoUpdate("a").SetRow(Row{
+			"b": false,
+			"c": true,
+		}).Build()
+		fmt.Println(sql)
+		assert.Equal(t, "INSERT INTO test (a, b, c) VALUES (123, '''ok''', TRUE) ON CONFLICT(a) DO UPDATE SET b=FALSE, c=TRUE", sql)
 	}
 	{
 		sql := Table("test").Insert(Row{
