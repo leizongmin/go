@@ -3,7 +3,7 @@ package yaml
 import (
 	"github.com/go-yaml/yaml"
 
-	"github.com/leizongmin/go-common-libs/configloader"
+	"github.com/leizongmin/go/configloader"
 )
 
 // 支持yaml格式的配置文件

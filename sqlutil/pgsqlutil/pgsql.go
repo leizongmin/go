@@ -9,7 +9,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/leizongmin/go-common-libs/sqlutil"
+	"github.com/leizongmin/go/sqlutil"
 )
 
 type ConnectionOptions struct {

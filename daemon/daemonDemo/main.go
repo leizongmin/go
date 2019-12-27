@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/leizongmin/go-common-libs/daemon"
+	"github.com/leizongmin/go/daemon"
 )
 
 func main() {

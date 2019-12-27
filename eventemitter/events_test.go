@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/leizongmin/go-common-libs/typeutil"
+	"github.com/leizongmin/go/typeutil"
 )
 
 func TestNew(t *testing.T) {

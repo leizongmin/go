@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/leizongmin/go-common-libs/sqlutil"
+	"github.com/leizongmin/go/sqlutil"
 )
 
 func TestTable(t *testing.T) {

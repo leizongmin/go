@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/leizongmin/go-common-libs/sqlutil"
+	"github.com/leizongmin/go/sqlutil"
 )
 
 type ConnectionOptions struct {

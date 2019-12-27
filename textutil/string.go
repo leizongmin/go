@@ -6,7 +6,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/leizongmin/go-common-libs/typeutil"
+	"github.com/leizongmin/go/typeutil"
 )
 
 // 是否为空白字符

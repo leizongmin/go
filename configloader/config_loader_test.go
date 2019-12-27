@@ -10,7 +10,7 @@ import (
 	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/leizongmin/go-common-libs/randutil"
+	"github.com/leizongmin/go/randutil"
 )
 
 func TestLoad(t *testing.T) {

@@ -3,7 +3,7 @@ package toml
 import (
 	"github.com/BurntSushi/toml"
 
-	"github.com/leizongmin/go-common-libs/configloader"
+	"github.com/leizongmin/go/configloader"
 )
 
 // 支持toml格式的配置文件

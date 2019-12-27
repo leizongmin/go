@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/leizongmin/go-common-libs/sqlutil"
+	"github.com/leizongmin/go/sqlutil"
 )
 
 func TestTable(t *testing.T) {

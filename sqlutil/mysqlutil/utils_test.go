@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/leizongmin/go-common-libs/sqlutil"
+	"github.com/leizongmin/go/sqlutil"
 )
 
 func TestInterpolateParams(t *testing.T) {
