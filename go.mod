@@ -1,4 +1,4 @@
-module github.com/leizongmin/go-common-libs
+module github.com/leizongmin/go
 
 go 1.13
 
