@@ -10,7 +10,7 @@ require (
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.7
-	github.com/lib/pq v1.2.0
+	github.com/lib/pq v1.3.0
 	github.com/sanity-io/litter v1.2.0
 	github.com/stretchr/testify v1.4.0
 	github.com/takama/daemon v0.11.0
