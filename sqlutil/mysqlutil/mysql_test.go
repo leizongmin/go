@@ -33,14 +33,14 @@ func TestTable(t *testing.T) {
 		DB   string `db:"db"`
 		User string `db:"user"`
 	}, 0)
-	ok := sqlutil.FindMany(conn, &list, Table("db").Select("host", "db", "user").Where("host='%'").Build())
+	ok := sqlutil.QueryMany(conn, &list, Table("db").Select("host", "db", "user").Where("host='%'").Build())
 	assert.True(t, ok)
 	litter.Dump(list)
 
 	item := struct {
 		XX string `db:"xx"`
 	}{}
-	ok2 := sqlutil.FindOne(conn, &item, Custom("SELECT ? AS xx", `"a"`))
+	ok2 := sqlutil.QueryOne(conn, &item, Custom("SELECT ? AS xx", `"a"`))
 	assert.True(t, ok2)
 	litter.Dump(item)
 }

@@ -27,7 +27,7 @@ func TestTable(t *testing.T) {
 		DatName string `db:"datname"`
 		DatDba  string `db:"datdba"`
 	}, 0)
-	ok := sqlutil.FindMany(conn, &list, Table("pg_database").Select("datname", "datdba").Where("encoding>?", 0).Build())
+	ok := sqlutil.QueryMany(conn, &list, Table("pg_database").Select("datname", "datdba").Where("encoding>?", 0).Build())
 	assert.True(t, ok)
 	litter.Dump(list)
 
@@ -35,7 +35,7 @@ func TestTable(t *testing.T) {
 		XX string `db:"xx"`
 		YY int    `db:"yy"`
 	}{}
-	ok2 := sqlutil.FindOne(conn, &item, Custom("SELECT ? AS xx, ? AS yy", `"a"`, 12345))
+	ok2 := sqlutil.QueryOne(conn, &item, Custom("SELECT ? AS xx, ? AS yy", `"a"`, 12345))
 	assert.True(t, ok2)
 	litter.Dump(item)
 }
