@@ -7,7 +7,6 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-sql-driver/mysql v1.5.0
-	github.com/go-yaml/yaml v2.2.7+incompatible
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.9
 	github.com/lib/pq v1.3.0
@@ -16,4 +15,5 @@ require (
 	github.com/takama/daemon v0.11.0
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	google.golang.org/appengine v1.6.3 // indirect
+	gopkg.in/yaml.v2 v2.2.7 // indirect
 )
