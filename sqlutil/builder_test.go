@@ -138,9 +138,9 @@ func TestTable(t *testing.T) {
 		assert.Equal(t, "SELECT a, b, c FROM test AS x LEFT JOIN test2 AS y ON x.a=y.a RIGHT JOIN test3 AS z WHERE x.a=666", sql)
 	}
 	{
-		sql := Table("test").SelectDistinct("*").Where("a=?", 123).And("b=?", 456).Skip(10).Limit(20).Build()
+		sql := Table("test").SelectDistinct("*").Where("a=?", 123).And("b=?", 456).Offset(10).Limit(20).Build()
 		fmt.Println(sql)
-		assert.Equal(t, "SELECT DISTINCT * FROM test WHERE a=123 AND b=456 LIMIT 10,20", sql)
+		assert.Equal(t, "SELECT DISTINCT * FROM test WHERE a=123 AND b=456 OFFSET 10 LIMIT 20", sql)
 	}
 	{
 		sql := Table("test").SelectDistinct("*").Where("a=?", 123).And("b=?", 456).GroupBy("a").Having("a=b").OrderBy("b").Skip(10).Limit(20).Build()

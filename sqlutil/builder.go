@@ -24,6 +24,7 @@ type QueryBuilder struct {
 	orderFields          string
 	orderBy              string
 	groupBy              string
+	skipRows             int
 	offsetRows           int
 	limitRows            int
 	limit                string
@@ -100,7 +101,7 @@ func (q *QueryBuilder) Clone() *QueryBuilder {
 		orderFields:          q.orderFields,
 		orderBy:              q.orderBy,
 		groupBy:              q.groupBy,
-		offsetRows:           q.offsetRows,
+		skipRows:             q.skipRows,
 		limitRows:            q.limitRows,
 		limit:                q.limit,
 		currentJoinTableName: q.currentJoinTableName,
@@ -368,14 +369,22 @@ func (q *QueryBuilder) Having(tpl string, args ...driver.Value) *QueryBuilder {
 }
 
 func (q *QueryBuilder) Skip(n int) *QueryBuilder {
+	q.skipRows = n
+	q.offsetRows = 0
+	q.limit = sqlLimitString(q.skipRows, q.offsetRows, q.limitRows)
+	return q
+}
+
+func (q *QueryBuilder) Offset(n int) *QueryBuilder {
 	q.offsetRows = n
-	q.limit = sqlLimitString(q.offsetRows, q.limitRows)
+	q.skipRows = 0
+	q.limit = sqlLimitString(q.skipRows, q.offsetRows, q.limitRows)
 	return q
 }
 
 func (q *QueryBuilder) Limit(n int) *QueryBuilder {
 	q.limitRows = n
-	q.limit = sqlLimitString(q.offsetRows, q.limitRows)
+	q.limit = sqlLimitString(q.skipRows, q.offsetRows, q.limitRows)
 	return q
 }
 
@@ -476,14 +485,21 @@ func (q *QueryBuilder) buildUpdate(tail string) string {
 	return sql
 }
 
-func sqlLimitString(offset int, limit int) string {
-	if limit > 0 {
-		if offset > 0 {
-			return fmt.Sprintf("LIMIT %d,%d", offset, limit)
-		}
-		return fmt.Sprintf("LIMIT %d", limit)
+func sqlLimitString(skip int, offset int, limit int) string {
+	var s string
+	if offset > 0 {
+		s = fmt.Sprintf("OFFSET %d ", offset)
 	}
-	return fmt.Sprintf("LIMIT %d,18446744073709551615", offset)
+	if limit > 0 {
+		if skip > 0 {
+			s += fmt.Sprintf("LIMIT %d,%d", skip, limit)
+		} else {
+			s += fmt.Sprintf("LIMIT %d", limit)
+		}
+	} else {
+		s += fmt.Sprintf("LIMIT %d,18446744073709551615", skip)
+	}
+	return s
 }
 
 func sqlTailString(list ...string) string {
