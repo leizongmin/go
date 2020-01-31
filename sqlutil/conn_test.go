@@ -35,4 +35,9 @@ func TestFindMany(t *testing.T) {
 	list = []Row{}
 	ok = QueryMany(tx, &list, "SHOW TABLES")
 	fmt.Printf("%v %+v\n", ok, list)
+
+	tx2, err := db.Beginx()
+	assert.NoError(t, err)
+	ok = QueryMany(tx2, &list, "SHOW TABLES")
+	fmt.Printf("%v %+v\n", ok, list)
 }
