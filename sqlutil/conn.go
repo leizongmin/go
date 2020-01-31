@@ -51,8 +51,8 @@ type AbstractDBBase interface {
 
 type AbstractDB interface {
 	AbstractDBBase
-	MustBegin() AbstractTx
-	Beginx() (AbstractTx, error)
+	MustBegin() *Tx
+	Beginx() (*Tx, error)
 }
 type AbstractTx interface {
 	AbstractDBBase

@@ -40,4 +40,14 @@ func TestFindMany(t *testing.T) {
 	assert.NoError(t, err)
 	ok = QueryMany(tx2, &list, "SHOW TABLES")
 	fmt.Printf("%v %+v\n", ok, list)
+
+	var db2 AbstractDB
+	db2 = db
+	fmt.Println(db2)
+	var db3 AbstractDBBase
+	db3 = db
+	fmt.Println(db3)
+	var tx3 AbstractTx
+	tx3 = tx2
+	fmt.Println(tx3)
 }
