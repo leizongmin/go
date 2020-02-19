@@ -11,7 +11,7 @@ require (
 	github.com/json-iterator/go v1.1.9
 	github.com/lib/pq v1.3.0
 	github.com/sanity-io/litter v1.2.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/takama/daemon v0.11.0
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	google.golang.org/appengine v1.6.3 // indirect
