@@ -2,12 +2,14 @@ package httputil
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -19,6 +21,7 @@ type HttpRequest struct {
 	Header      http.Header
 	Query       url.Values
 	RequestBody io.Reader
+	Timeout     time.Duration
 }
 
 // 新请求
@@ -145,13 +148,13 @@ func (r *HttpRequest) AddQuery(key string, value string) *HttpRequest {
 }
 
 // 设置请求体
-func (r *HttpRequest) Body(body io.Reader) *HttpRequest {
+func (r *HttpRequest) WithBody(body io.Reader) *HttpRequest {
 	r.RequestBody = body
 	return r
 }
 
 // 设置JSON请求体
-func (r *HttpRequest) JSON(data interface{}) *HttpRequest {
+func (r *HttpRequest) WithJSONBody(data interface{}) *HttpRequest {
 	buf, err := jsoniter.Marshal(data)
 	if err != nil {
 		log.Println(err)
@@ -166,6 +169,12 @@ func (r *HttpRequest) JSON(data interface{}) *HttpRequest {
 func (r *HttpRequest) AcceptJSON() *HttpRequest {
 	r.SetHeader("content-type", "application/json")
 	r.SetHeader("accept", "application/json")
+	return r
+}
+
+// 设置超时时间
+func (r *HttpRequest) WithTimeout(d time.Duration) *HttpRequest {
+	r.Timeout = d
 	return r
 }
 
@@ -192,6 +201,12 @@ func (r *HttpRequest) Send() (*HttpResponse, error) {
 		return nil, err
 	}
 	req.Header = r.Header
+
+	if r.Timeout > 0 {
+		ctx, cancel := context.WithCancel(context.TODO())
+		time.AfterFunc(r.Timeout, cancel)
+		req.WithContext(ctx)
+	}
 
 	resp, err := client.Do(req)
 	if err != nil {

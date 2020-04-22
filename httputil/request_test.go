@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -43,5 +44,10 @@ func TestRequest(t *testing.T) {
 		r2.SetQuery("a", "456")
 		assert.Equal(t, "123", r1.Query.Get("a"))
 		assert.Equal(t, "456", r2.Query.Get("a"))
+	}
+	{
+		_, err := req.Clone().GET("https://cnodejs.org").WithTimeout(time.Millisecond).Send()
+		assert.Error(t, err)
+		assert.Equal(t, `Get "https://cnodejs.org?x=xx": context deadline exceeded (Client.Timeout exceeded while awaiting headers)`, err.Error())
 	}
 }
