@@ -14,7 +14,7 @@ require (
 	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/takama/daemon v0.11.0
-	golang.org/x/net v0.0.0-20190603091049-60506f45cf65 // indirect
+	go.uber.org/zap v1.14.1
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	gopkg.in/yaml.v2 v2.2.8
 )
