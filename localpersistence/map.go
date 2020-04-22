@@ -52,7 +52,7 @@ func (m *Map) Remove(key string) (err error) {
 }
 
 // 遍历所有key
-func (m *Map) EachKey(fn func(key string) bool) (err error) {
+func (m *Map) ForEachKey(fn func(key string) bool) (err error) {
 	iter := m.db.NewIterator(nil, nil)
 	defer iter.Release()
 	if !iter.First() {

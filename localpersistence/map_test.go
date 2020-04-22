@@ -36,7 +36,7 @@ func TestOpenMap(t *testing.T) {
 	}
 	{
 		var values []int
-		err := m.EachKey(func(key string) bool {
+		err := m.ForEachKey(func(key string) bool {
 			var v int
 			ok, err := m.Get(key, &v)
 			assert.NoError(t, err)
