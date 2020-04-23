@@ -3,6 +3,7 @@ package localpersistence
 import (
 	"bytes"
 	"encoding/binary"
+	"sync"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -12,6 +13,7 @@ import (
 const sortedListCacheSeconds = 1
 
 type SortedList struct {
+	mu                     sync.Mutex
 	db                     *DB
 	opts                   *Options
 	cacheIterator          iterator.Iterator
@@ -57,11 +59,15 @@ func (l *SortedList) decodeKey(b []byte, value interface{}) (score int64, err er
 	return score, nil
 }
 
-func (l *SortedList) reopenCacheIterator() (iterator.Iterator, error) {
+func (l *SortedList) releaseCacheIterator() {
 	if l.cacheIterator != nil {
 		l.cacheIterator.Release()
 		l.cacheIterator = nil
 	}
+}
+
+func (l *SortedList) reopenCacheIterator() (iterator.Iterator, error) {
+	l.releaseCacheIterator()
 	l.cacheIterator = l.db.NewIterator(nil, nil)
 	l.cacheIterator.First()
 	ts := time.Now().Unix()
@@ -81,6 +87,9 @@ func (l *SortedList) getCacheIterator() (iterator.Iterator, error) {
 }
 
 func (l *SortedList) Add(score int64, value interface{}) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	b, err := l.encodeKey(score, value)
 	if err != nil {
 		return err
@@ -90,6 +99,9 @@ func (l *SortedList) Add(score int64, value interface{}) error {
 
 // 取得第一个元素
 func (l *SortedList) First(maxScore int64, value interface{}) (ok bool, err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	iter, err := l.getCacheIterator()
 	if err != nil {
 		return false, err
@@ -132,8 +144,9 @@ func (l *SortedList) Size() (size int, err error) {
 
 // 关闭数据库
 func (l *SortedList) Close() error {
-	if l.cacheIterator != nil {
-		l.cacheIterator.Release()
-	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.releaseCacheIterator()
 	return l.db.Close()
 }
