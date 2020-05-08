@@ -1,12 +1,8 @@
 package localpersistence
 
 import (
-	"fmt"
 	"log"
-	"os"
-	"path"
 	"testing"
-	"time"
 
 	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +11,7 @@ import (
 )
 
 func TestOpenList(t *testing.T) {
-	file := path.Join(os.TempDir(), fmt.Sprintf("localpersistence-list-%d", time.Now().Unix()))
+	file := generateTempPath()
 	log.Println(file)
 	list, err := OpenList(file, nil)
 	defer list.Close()

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
-	"path"
 	"testing"
 	"time"
 
@@ -16,7 +14,7 @@ import (
 )
 
 func TestOpenSortedList(t *testing.T) {
-	file := path.Join(os.TempDir(), fmt.Sprintf("localpersistence-sortedlist-%d", time.Now().UnixNano()))
+	file := generateTempPath()
 	log.Println(file)
 	list, err := OpenSortedList(file, nil)
 	defer list.Close()
@@ -78,7 +76,7 @@ func TestOpenSortedList(t *testing.T) {
 }
 
 func BenchmarkOpenSortedList(b *testing.B) {
-	file := path.Join(os.TempDir(), fmt.Sprintf("localpersistence-sortedlist-%d", time.Now().UnixNano()))
+	file := generateTempPath()
 	log.Println(file)
 	list, err := OpenSortedList(file, nil)
 	defer list.Close()
