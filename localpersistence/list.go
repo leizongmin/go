@@ -3,11 +3,13 @@ package localpersistence
 import (
 	"bytes"
 	"encoding/binary"
+	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
 type List struct {
+	mu         sync.Mutex
 	db         *DB
 	opts       *Options
 	leftIndex  int64
@@ -74,6 +76,9 @@ func (l *List) decodeKey(b []byte) (int64, error) {
 
 // 添加到队列首
 func (l *List) AddToFirst(value interface{}) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	l.leftIndex--
 	k, err := l.encodeKey(l.leftIndex)
 	if err != nil {
@@ -88,6 +93,9 @@ func (l *List) AddToFirst(value interface{}) error {
 
 // 添加到队列尾
 func (l *List) AddToLast(value interface{}) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	l.rightIndex++
 	k, err := l.encodeKey(l.rightIndex)
 	if err != nil {
@@ -102,6 +110,9 @@ func (l *List) AddToLast(value interface{}) error {
 
 // 删除队列首
 func (l *List) RemoveFirst(value interface{}) (ok bool, err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	for l.leftIndex <= l.rightIndex {
 		k, err := l.encodeKey(l.leftIndex)
 		if err != nil {
@@ -126,6 +137,9 @@ func (l *List) RemoveFirst(value interface{}) (ok bool, err error) {
 
 // 删除队列尾
 func (l *List) RemoveLast(value interface{}) (ok bool, err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
 	for l.rightIndex >= l.leftIndex {
 		k, err := l.encodeKey(l.rightIndex)
 		if err != nil {

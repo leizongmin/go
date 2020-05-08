@@ -1,8 +1,10 @@
 package localpersistence
 
 import (
+	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
@@ -75,4 +77,60 @@ func TestOpenList(t *testing.T) {
 		litter.Dump(ret)
 		assert.Equal(t, []string{"z", "y", "x", "a", "b", "c"}, ret)
 	}
+}
+
+func TestListConcurrency(t *testing.T) {
+	file := generateTempPath()
+	log.Println(file)
+	list, err := OpenList(file, nil)
+	assert.NoError(t, err)
+	defer list.Close()
+
+	count := 10000
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			assert.NoError(t, list.AddToFirst(fmt.Sprintf("key1_%d", i)))
+		}
+		fmt.Println("key1 done")
+	}()
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			assert.NoError(t, list.AddToLast(fmt.Sprintf("key2_%d", i)))
+		}
+		fmt.Println("key2 done")
+	}()
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			s := ""
+			_, err := list.RemoveFirst(&s)
+			assert.NoError(t, err)
+		}
+		fmt.Println("key3 done")
+	}()
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			s := ""
+			_, err := list.RemoveLast(&s)
+			assert.NoError(t, err)
+		}
+		fmt.Println("key4 done")
+	}()
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			_, err := list.Size()
+			assert.NoError(t, err)
+		}
+		fmt.Println("key5 done")
+	}()
+	time.Sleep(10 * time.Second)
 }

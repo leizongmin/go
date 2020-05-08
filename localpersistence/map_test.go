@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
@@ -51,4 +52,48 @@ func TestOpenMap(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 0, size)
 	}
+}
+
+func TestMapConcurrency(t *testing.T) {
+	file := generateTempPath()
+	log.Println(file)
+	m, err := OpenMap(file, nil)
+	assert.NoError(t, err)
+	defer m.Close()
+
+	count := 10000
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			assert.NoError(t, m.Put(fmt.Sprintf("key1_%d", i), i))
+		}
+		fmt.Println("key1 done")
+	}()
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			assert.NoError(t, m.Put(fmt.Sprintf("key2_%d", i), i))
+		}
+		fmt.Println("key2 done")
+	}()
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			assert.NoError(t, m.Put(fmt.Sprintf("key3_%d", i), i))
+		}
+		fmt.Println("key3 done")
+	}()
+	go func() {
+		i := 0
+		for i < count {
+			i++
+			_, err := m.Size()
+			assert.NoError(t, err)
+		}
+		fmt.Println("key4 done")
+	}()
+	time.Sleep(10 * time.Second)
 }
