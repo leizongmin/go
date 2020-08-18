@@ -78,6 +78,15 @@ func (s *service) Manage(onStart func(), onShutdown func() error) (string, error
 	}
 }
 
+type Kind daemon.Kind
+
+const (
+	UserAgent    = daemon.UserAgent
+	GlobalAgent  = daemon.GlobalAgent
+	GlobalDaemon = daemon.GlobalDaemon
+	SystemDaemon = daemon.SystemDaemon
+)
+
 // 启动服务，一般在 main() 函数中执行
 // serviceName 服务名称
 // serviceDescription 服务介绍

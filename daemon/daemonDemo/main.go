@@ -13,7 +13,7 @@ func main() {
 	daemon.SetLogFunc(func(format string, a ...interface{}) {
 		fmt.Printf("[Custom Log Func] "+format+"\n", a...)
 	})
-	daemon.Run("my-example-service", "no description", nil, func() {
+	daemon.Run("my-example-service", "no description", daemon.SystemDaemon, nil, func() {
 		go func() {
 			log.Println("Server started...")
 			for {
