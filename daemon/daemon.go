@@ -81,11 +81,12 @@ func (s *service) Manage(onStart func(), onShutdown func() error) (string, error
 // 启动服务，一般在 main() 函数中执行
 // serviceName 服务名称
 // serviceDescription 服务介绍
+// kind 服务类型，darwin 不能使用 SystemDaemon，freebsd、linux、windows 只能使用 SystemDaemon
 // dependencies 服务依赖项，一般为 nil
 // onStart 启动服务函数，如果函数内有阻塞的代码（比如监听服务器），需要自己创建 goroutine
 // onShutdown 关闭服务函数，用于接收到关闭信号后执行相应的清理，当函数结束时进程将退出
-func Run(serviceName string, serviceDescription string, dependencies []string, onStart func(), onShutdown func() error) {
-	srv, err := daemon.New(serviceName, serviceDescription, dependencies...)
+func Run(serviceName string, serviceDescription string, kind daemon.Kind, dependencies []string, onStart func(), onShutdown func() error) {
+	srv, err := daemon.New(serviceName, serviceDescription, kind, dependencies...)
 	if err != nil {
 		logf("Error: %s", err)
 		os.Exit(1)
