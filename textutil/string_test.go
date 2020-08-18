@@ -36,7 +36,4 @@ func TestString(t *testing.T) {
 	assert.Equal(t, ``, AnythingToString(nil))
 	assert.Equal(t, `{}`, AnythingToString(struct{}{}))
 	assert.Equal(t, `{a:123}`, AnythingToString(struct{ a int }{a: 123}))
-
-	assert.Equal(t, 123, ParseToInt("123", 456))
-	assert.Equal(t, 456, ParseToInt("XX123", 456))
 }

@@ -1,4 +1,4 @@
-package numberutil
+package textutil
 
 import (
 	"testing"

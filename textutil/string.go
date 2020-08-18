@@ -2,7 +2,6 @@ package textutil
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
@@ -62,13 +61,4 @@ func AnythingToString(v interface{}) string {
 		return ret
 	}
 	return fmt.Sprintf("%+v", v)
-}
-
-// 解析为int，如果失败则返回默认值
-func ParseToInt(s string, defaultValue int) int {
-	ret, err := strconv.Atoi(s)
-	if err != nil {
-		return defaultValue
-	}
-	return ret
 }
