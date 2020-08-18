@@ -22,3 +22,21 @@ func TestLoopI(t *testing.T) {
 	})
 	assert.Equal(t, j, 100)
 }
+
+func TestTernary(t *testing.T) {
+	assert.Equal(t, Ternary(true, 123, 456), 123)
+	assert.Equal(t, Ternary(false, 123, 456), 456)
+}
+
+func TestTernaryDo(t *testing.T) {
+	assert.Equal(t, TernaryDo(true, func() interface{} {
+		return 123
+	}, func() interface{} {
+		return 456
+	}), 123)
+	assert.Equal(t, TernaryDo(false, func() interface{} {
+		return 123
+	}, func() interface{} {
+		return 456
+	}), 456)
+}
