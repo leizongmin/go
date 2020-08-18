@@ -10,6 +10,6 @@ func SpentTime(msg string, f func()) time.Duration {
 	start := time.Now()
 	f()
 	spent := time.Now().Sub(start)
-	fmt.Printf("[spent:%s]\t%s", spent, msg)
+	fmt.Printf("[spent:%s]\t%s\n", spent, msg)
 	return spent
 }
