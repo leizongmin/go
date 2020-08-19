@@ -2,6 +2,8 @@ package cliargs
 
 import (
 	"regexp"
+
+	"github.com/leizongmin/go/textutil"
 )
 
 type CliArgs struct {
@@ -17,6 +19,7 @@ type OptionItem struct {
 }
 
 // 解析命令行参数
+// 支持解析 -name=value, --name=value 这种形式
 func Parse(rawArgs []string) *CliArgs {
 	return (&CliArgs{RawArgs: rawArgs, Options: map[string]OptionItem{}}).parse()
 }
@@ -52,6 +55,14 @@ func (a *CliArgs) GetOption(name string) OptionItem {
 	return a.Options[name]
 }
 
+// 获取指定选项，如果不存在则返回默认值
+func (a *CliArgs) GetOptionOrDefault(name string, defaultValue string) OptionItem {
+	if _, ok := a.Options[name]; !ok {
+		return OptionItem{Key: name, Value: defaultValue}
+	}
+	return a.Options[name]
+}
+
 // 选项的数量
 func (a *CliArgs) OptionsCount() int {
 	return len(a.Options)
@@ -69,8 +80,11 @@ func (a *CliArgs) ArgsCount() int {
 	return len(a.Args)
 }
 
-// 取指定索引的参数
+// 取指定索引的参数，如果不存在则返回空字符串
 func (a *CliArgs) GetArg(i int) string {
+	if i >= len(a.Args) {
+		return ""
+	}
 	return a.Args[i]
 }
 
@@ -81,11 +95,26 @@ func (a *CliArgs) ForEachArgs(handler func(item string)) {
 	}
 }
 
-// 取指定索引位置开始的参数
+// 取指定索引位置开始的参数，如果不存在则返回空的Args
 func (a *CliArgs) SubArgs(i int) *CliArgs {
+	if i >= len(a.Args) {
+		return &CliArgs{
+			RawArgs: a.RawArgs,
+			Options: a.Options,
+			Args:    []string{},
+		}
+	}
 	return &CliArgs{
 		RawArgs: a.RawArgs,
 		Options: a.Options,
 		Args:    a.Args[i:],
 	}
+}
+
+func (o OptionItem) TryParseInt(defaultValue int) int {
+	return textutil.TryParseInt(o.Value, defaultValue)
+}
+
+func (o OptionItem) TryParseInt64(defaultValue int64) int64 {
+	return textutil.TryParseInt64(o.Value, defaultValue)
 }

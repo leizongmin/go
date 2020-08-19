@@ -18,6 +18,11 @@ func TestParse(t *testing.T) {
 	assert.False(t, a.HasOption("c"))
 	assert.False(t, a.HasOption("def"))
 
+	assert.Equal(t, OptionItem{Key: "a", Value: "123", Raw: "--a=123"}, a.GetOption("a"))
+	assert.Equal(t, OptionItem{Key: "b", Value: "456", Raw: "-b=456"}, a.GetOption("b"))
+	assert.Equal(t, OptionItem{Key: "a", Value: "123", Raw: "--a=123"}, a.GetOptionOrDefault("a", "xxxx"))
+	assert.Equal(t, OptionItem{Key: "c", Value: "xxxx", Raw: ""}, a.GetOptionOrDefault("c", "xxxx"))
+
 	assert.Equal(t, 3, a.ArgsCount())
 	assert.Equal(t, "x=123", a.GetArg(0))
 	assert.Equal(t, "c", a.GetArg(1))
@@ -42,4 +47,7 @@ func TestParse(t *testing.T) {
 	a.ForEachOptions(func(item OptionItem) {
 		fmt.Println(item)
 	})
+
+	assert.Equal(t, 123, a.GetOption("a").TryParseInt(0))
+	assert.Equal(t, int64(456), a.GetOption("b").TryParseInt64(0))
 }
