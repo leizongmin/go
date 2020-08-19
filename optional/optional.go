@@ -1,5 +1,9 @@
 package optional
 
+import (
+	"fmt"
+)
+
 type Optional struct {
 	IsNone bool
 	IsSome bool
@@ -52,4 +56,11 @@ func (o Optional) OrElseGet(supplier func() interface{}) interface{} {
 		return supplier()
 	}
 	return o.Value
+}
+
+func (o Optional) ToString() string {
+	if o.IsNone {
+		return "None"
+	}
+	return fmt.Sprintf("Some(%+v)", o.Value)
 }
