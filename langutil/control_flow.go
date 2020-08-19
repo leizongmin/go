@@ -19,7 +19,7 @@ func LoopI(n int, f func(i int)) {
 }
 
 // 三目运算
-func Ternary(ok bool, a interface{}, b interface{}) interface{} {
+func If(ok bool, a interface{}, b interface{}) interface{} {
 	if ok {
 		return a
 	}
@@ -27,7 +27,7 @@ func Ternary(ok bool, a interface{}, b interface{}) interface{} {
 }
 
 // 三目运算，执行函数
-func TernaryDo(ok bool, doA func() interface{}, doB func() interface{}) interface{} {
+func IfDo(ok bool, doA func() interface{}, doB func() interface{}) interface{} {
 	if ok {
 		return doA()
 	}
