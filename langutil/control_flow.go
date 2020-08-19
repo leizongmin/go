@@ -19,17 +19,17 @@ func LoopI(n int, f func(i int)) {
 }
 
 // 三目运算
-func If(ok bool, a interface{}, b interface{}) interface{} {
-	if ok {
-		return a
+func If(condition bool, thenValue interface{}, elseValue interface{}) interface{} {
+	if condition {
+		return thenValue
 	}
-	return b
+	return elseValue
 }
 
 // 三目运算，执行函数
-func IfDo(ok bool, doA func() interface{}, doB func() interface{}) interface{} {
-	if ok {
-		return doA()
+func IfDo(condition bool, thenDo func() interface{}, elseDo func() interface{}) interface{} {
+	if condition {
+		return thenDo()
 	}
-	return doB()
+	return elseDo()
 }
