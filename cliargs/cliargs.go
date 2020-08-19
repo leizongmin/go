@@ -118,3 +118,23 @@ func (o OptionItem) TryParseInt(defaultValue int) int {
 func (o OptionItem) TryParseInt64(defaultValue int64) int64 {
 	return textutil.TryParseInt64(o.Value, defaultValue)
 }
+
+func (o OptionItem) TryParseUint(defaultValue uint) uint {
+	return textutil.TryParseUint(o.Value, defaultValue)
+}
+
+func (o OptionItem) TryParseUint64(defaultValue uint64) uint64 {
+	return textutil.TryParseUint64(o.Value, defaultValue)
+}
+
+func (o OptionItem) TryParseFloat32(defaultValue float32) float32 {
+	return textutil.TryParseFloat32(o.Value, defaultValue)
+}
+
+func (o OptionItem) TryParseFloat64(defaultValue float64) float64 {
+	return textutil.TryParseFloat64(o.Value, defaultValue)
+}
+
+func (o OptionItem) TryParseBool(defaultValue bool) bool {
+	return textutil.TryParseBool(o.Value, defaultValue)
+}
