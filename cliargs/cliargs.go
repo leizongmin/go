@@ -25,21 +25,35 @@ func Parse(rawArgs []string) *CliArgs {
 }
 
 func (a *CliArgs) parse() *CliArgs {
-	reg, err := regexp.Compile("^\\-\\-?(\\w+)=(.*)$")
+	reg1, err := regexp.Compile("^\\-\\-?(\\w+)=(.*)$")
 	if err != nil {
 		panic(err)
 	}
+	reg2, err := regexp.Compile("^\\-\\-?(\\w+)$")
+	if err != nil {
+		panic(err)
+	}
+
 	for _, s := range a.RawArgs {
-		ret := reg.FindStringSubmatch(s)
-		if len(ret) > 0 {
-			a.Options[ret[1]] = OptionItem{
-				Key:   ret[1],
-				Value: ret[2],
+		ret1 := reg1.FindStringSubmatch(s)
+		if len(ret1) > 0 {
+			a.Options[ret1[1]] = OptionItem{
+				Key:   ret1[1],
+				Value: ret1[2],
 				Raw:   s,
 			}
-		} else {
-			a.Args = append(a.Args, s)
+			continue
 		}
+		ret2 := reg2.FindStringSubmatch(s)
+		if len(ret2) > 0 {
+			a.Options[ret2[1]] = OptionItem{
+				Key:   ret2[1],
+				Value: "",
+				Raw:   s,
+			}
+			continue
+		}
+		a.Args = append(a.Args, s)
 	}
 	return a
 }
