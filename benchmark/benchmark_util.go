@@ -9,11 +9,11 @@ import (
 var spentTimeLog *log.Logger
 
 func init() {
-	spentTimeLog = log.New(os.Stderr, "[benchmark.SpentTime] ", log.LstdFlags)
+	spentTimeLog = log.New(os.Stderr, "[benchmark.Spent] ", log.LstdFlags)
 }
 
 // 打印执行函数消耗的时间
-func SpentTime(msg string, f func()) time.Duration {
+func Spent(msg string, f func()) time.Duration {
 	spentTimeLog.Println(msg)
 	start := time.Now()
 	f()

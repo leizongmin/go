@@ -17,9 +17,7 @@ type Result struct {
 // 执行测试
 func Do(count int, loop func()) Result {
 	st := time.Now()
-	n := 0
-	for n < count {
-		n++
+	for n := 0; n < count; n++ {
 		loop()
 	}
 	et := time.Now()
@@ -39,9 +37,7 @@ func DoParallel(concurrent int, count int, loop func()) Result {
 		concurrent = runtime.NumCPU()
 	}
 	parallelLoop := func(count int, wg *sync.WaitGroup) {
-		n := 0
-		for n < count {
-			n++
+		for n := 0; n < count; n++ {
 			loop()
 		}
 		wg.Done()
@@ -49,12 +45,11 @@ func DoParallel(concurrent int, count int, loop func()) Result {
 	st := time.Now()
 	wg := sync.WaitGroup{}
 	wg.Add(concurrent)
-	c := 0
 	pc := int(math.Ceil(float64(count) / float64(concurrent)))
-	for c < concurrent {
-		c++
-		parallelLoop(pc, &wg)
+	for c := 0; c < concurrent; c++ {
+		go parallelLoop(pc, &wg)
 	}
+	wg.Wait()
 	et := time.Now()
 	spent := et.Sub(st) / time.Duration(pc*concurrent)
 	return Result{Count: count, Spent: spent, TPS: int(time.Second / spent)}
