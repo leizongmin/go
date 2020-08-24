@@ -47,6 +47,8 @@ type AbstractDBBase interface {
 	Get(dest interface{}, query string, args ...interface{}) error
 	Select(dest interface{}, query string, args ...interface{}) error
 	Exec(query string, args ...interface{}) (sql.Result, error)
+	Queryx(query string, args ...interface{}) (*sqlx.Rows, error)
+	QueryRowx(query string, args ...interface{}) *sqlx.Row
 }
 
 type AbstractDB interface {
@@ -152,6 +154,60 @@ func QueryMany(tx AbstractDBBase, dest interface{}, query string, args ...interf
 	}
 	debugf("#%d QueryMany: success=true", queryCounter)
 	return true
+}
+
+// 执行查询，有一行Map返回结果，所有字段值为[]byte或nil类型，可以转换为字符串
+func QueryOneToMap(tx AbstractDBBase, query string, args ...interface{}) (row Row, success bool) {
+	incrQueueCounter()
+	debugf("#%d QueryOne: %s %+v", queryCounter, query, args)
+	result, err := tx.Queryx(query, args...)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			warningf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
+		}
+		debugf("#%d QueryOne: success=false", queryCounter)
+		return nil, false
+	}
+	if !result.Next() {
+		debugf("#%d QueryOne: success=false", queryCounter)
+		return nil, false
+	}
+	debugf("#%d QueryOne: success=true", queryCounter)
+	row = make(Row)
+	if err := result.MapScan(row); err != nil {
+		debugf("#%d QueryOne: success=false, %s", queryCounter, err)
+		return nil, false
+	}
+	return row, true
+}
+
+// 执行查询，有多行Map返回结果，所有字段值为[]byte或nil类型，可以转换为字符串
+func QueryManyToMap(tx AbstractDBBase, query string, args ...interface{}) (rows []Row, success bool) {
+	incrQueueCounter()
+	debugf("#%d QueryOne: %s %+v", queryCounter, query, args)
+	result, err := tx.Queryx(query, args...)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			warningf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
+		}
+		debugf("#%d QueryOne: success=false", queryCounter)
+		return nil, false
+	}
+	//if !result.Next() {
+	//	debugf("#%d QueryOne: success=false", queryCounter)
+	//	return nil, false
+	//}
+	debugf("#%d QueryOne: success=true", queryCounter)
+	rows = make([]Row, 0)
+	for result.Next() {
+		row := make(Row)
+		if err := result.MapScan(row); err != nil {
+			debugf("#%d QueryOne: success=false, %s", queryCounter, err)
+			return nil, false
+		}
+		rows = append(rows, row)
+	}
+	return rows, true
 }
 
 type QueryCountRow struct {

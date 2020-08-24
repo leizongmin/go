@@ -50,4 +50,25 @@ func TestFindMany(t *testing.T) {
 	var tx3 AbstractTx
 	tx3 = tx2
 	fmt.Println(tx3)
+
+	{
+		user, ok := QueryOneToMap(db, "SELECT count(*) as count FROM user LIMIT 1")
+		assert.True(t, ok)
+		fmt.Println(user)
+		for n, v := range user {
+			fmt.Println("\t", n, string(v.([]byte)))
+		}
+
+		users, ok := QueryManyToMap(db, "SELECT * FROM user LIMIT 3")
+		assert.True(t, ok)
+		fmt.Println(users)
+		for _, user := range users {
+			fmt.Println(user)
+			for n, v := range user {
+				if v != nil {
+					fmt.Println("\t", n, string(v.([]byte)))
+				}
+			}
+		}
+	}
 }

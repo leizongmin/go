@@ -25,6 +25,6 @@ func TestInterpolateParams2(t *testing.T) {
 		t.Error(err)
 	}
 	assert.NoError(t, err)
-	assert.Equal(t, `VALUES ('\\\\"da\\\\"')`, ret)
+	assert.Equal(t, `VALUES (\\\\"da\\\\")`, ret)
 	fmt.Println(ret)
 }
