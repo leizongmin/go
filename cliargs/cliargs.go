@@ -19,17 +19,17 @@ type OptionItem struct {
 }
 
 // 解析命令行参数
-// 支持解析 -name=value, --name=value 这种形式
+// 支持解析 -name=value, --name=value, -name, --name 这种形式
 func Parse(rawArgs []string) *CliArgs {
 	return (&CliArgs{RawArgs: rawArgs, Options: map[string]OptionItem{}}).parse()
 }
 
 func (a *CliArgs) parse() *CliArgs {
-	reg1, err := regexp.Compile("^\\-\\-?(\\w+)=(.*)$")
+	reg1, err := regexp.Compile("^\\-\\-?([\\w\\-_]+)=(.*)$")
 	if err != nil {
 		panic(err)
 	}
-	reg2, err := regexp.Compile("^\\-\\-?(\\w+)$")
+	reg2, err := regexp.Compile("^\\-\\-?([\\w\\-_]+)$")
 	if err != nil {
 		panic(err)
 	}

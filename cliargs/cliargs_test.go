@@ -8,19 +8,19 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	a := Parse([]string{"x=123", "--a=123", "-b=456", "c", "def", "-h"})
+	a := Parse([]string{"x=123", "--a=123", "-b-x=456", "c", "def", "-h"})
 	fmt.Printf("%+v\n", a)
 
 	assert.Equal(t, 3, a.OptionsCount())
 	assert.True(t, a.HasOption("a"))
-	assert.True(t, a.HasOption("b"))
+	assert.True(t, a.HasOption("b-x"))
 	assert.True(t, a.HasOption("h"))
 	assert.False(t, a.HasOption("x"))
 	assert.False(t, a.HasOption("c"))
 	assert.False(t, a.HasOption("def"))
 
 	assert.Equal(t, OptionItem{Key: "a", Value: "123", Raw: "--a=123"}, a.GetOption("a"))
-	assert.Equal(t, OptionItem{Key: "b", Value: "456", Raw: "-b=456"}, a.GetOption("b"))
+	assert.Equal(t, OptionItem{Key: "b-x", Value: "456", Raw: "-b-x=456"}, a.GetOption("b-x"))
 	assert.Equal(t, OptionItem{Key: "h", Value: "", Raw: "-h"}, a.GetOption("h"))
 	assert.Equal(t, OptionItem{Key: "a", Value: "123", Raw: "--a=123"}, a.GetOptionOrDefault("a", "xxxx"))
 	assert.Equal(t, OptionItem{Key: "c", Value: "xxxx", Raw: ""}, a.GetOptionOrDefault("c", "xxxx"))
@@ -34,7 +34,7 @@ func TestParse(t *testing.T) {
 
 	assert.Equal(t, 3, a.OptionsCount())
 	assert.True(t, a.HasOption("a"))
-	assert.True(t, a.HasOption("b"))
+	assert.True(t, a.HasOption("b-x"))
 	assert.True(t, a.HasOption("h"))
 	assert.False(t, a.HasOption("x"))
 	assert.False(t, a.HasOption("c"))
@@ -52,5 +52,5 @@ func TestParse(t *testing.T) {
 	})
 
 	assert.Equal(t, 123, a.GetOption("a").TryParseInt(0))
-	assert.Equal(t, int64(456), a.GetOption("b").TryParseInt64(0))
+	assert.Equal(t, int64(456), a.GetOption("b-x").TryParseInt64(0))
 }
