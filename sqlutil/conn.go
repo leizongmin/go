@@ -161,6 +161,7 @@ func QueryOneToMap(tx AbstractDBBase, query string, args ...interface{}) (row Ro
 	incrQueueCounter()
 	debugf("#%d QueryOne: %s %+v", queryCounter, query, args)
 	result, err := tx.Queryx(query, args...)
+	defer result.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
 			warningf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
@@ -186,6 +187,7 @@ func QueryManyToMap(tx AbstractDBBase, query string, args ...interface{}) (rows 
 	incrQueueCounter()
 	debugf("#%d QueryOne: %s %+v", queryCounter, query, args)
 	result, err := tx.Queryx(query, args...)
+	defer result.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
 			warningf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
