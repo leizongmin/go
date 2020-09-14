@@ -14,13 +14,13 @@ func DisableDebug() {
 
 func debugf(format string, args ...interface{}) {
 	if isDebug {
-		logDebugf("DEBUG\t"+format, args...)
+		logDebugf(format, args...)
 	}
 }
 
 func warnf(format string, args ...interface{}) {
 	if isDebug {
-		logWarnf("WARN\t"+format, args...)
+		logWarnf(format, args...)
 	}
 }
 
