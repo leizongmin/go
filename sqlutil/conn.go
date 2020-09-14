@@ -225,3 +225,35 @@ func QueryCount(tx AbstractDBBase, query string, args ...interface{}) (count int
 	}
 	return 0, false
 }
+
+// 事务执行多行SQL
+func BatchExec(db AbstractDB, sqlList ...string) error {
+	incrQueueCounter()
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+	go func() {
+		if err != nil && tx != nil {
+			debugf("#%d BatchExec failed %s", queryCounter, err)
+			if err2 := tx.Rollback(); err2 != nil {
+				debugf("#%d BatchExec rollback failed %s", queryCounter, err2)
+			}
+		}
+	}()
+	for i, s := range sqlList {
+		debugf("#%d BatchExec: [%d] %s", queryCounter, i, s)
+		r, err := tx.Exec(s)
+		if err != nil {
+			return err
+		}
+		rowsAffected, _ := r.RowsAffected()
+		lastInsertId, _ := r.LastInsertId()
+		debugf("#%d BatchExec: success=true rowsAffected=%d lastInsertId=%d", queryCounter, rowsAffected, lastInsertId)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -71,4 +71,9 @@ func TestFindMany(t *testing.T) {
 			}
 		}
 	}
+
+	{
+		err := BatchExec(db, "SELECT * FROM user LIMIT 1", "SELECT * FROM user LIMIT 1")
+		assert.NoError(t, err)
+	}
 }
