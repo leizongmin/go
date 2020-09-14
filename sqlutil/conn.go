@@ -2,7 +2,6 @@ package sqlutil
 
 import (
 	"database/sql"
-	"log"
 	"sync/atomic"
 
 	"github.com/jmoiron/sqlx"
@@ -62,28 +61,6 @@ type AbstractTx interface {
 	Commit() error
 }
 
-var isDebug = false
-
-func EnableDebug() {
-	isDebug = true
-}
-
-func DisableDebug() {
-	isDebug = false
-}
-
-func debugf(format string, args ...interface{}) {
-	if isDebug {
-		log.Printf("DEBUG\t"+format, args...)
-	}
-}
-
-func warningf(format string, args ...interface{}) {
-	if isDebug {
-		log.Printf("WARN\t"+format, args...)
-	}
-}
-
 type Row = map[string]interface{}
 
 // 执行查询，无返回结果
@@ -92,12 +69,12 @@ func Exec(tx AbstractDBBase, query string, args ...interface{}) (rowsAffected in
 	debugf("#%d Exec: %s %+v", queryCounter, query, args)
 	res, err := tx.Exec(query, args...)
 	if err != nil {
-		warningf("Exec failed: %s => %s %+v", err, query, args)
+		warnf("Exec failed: %s => %s %+v", err, query, args)
 		return 0, false
 	}
 	rows, err := res.RowsAffected()
 	if err != nil {
-		warningf("Exec failed: %s => %s %+v", err, query, args)
+		warnf("Exec failed: %s => %s %+v", err, query, args)
 	}
 	rowsAffected = rows
 	debugf("#%d Exec: rowsAffected=%d", queryCounter, rowsAffected)
@@ -112,12 +89,12 @@ func ExecInsert(tx AbstractDBBase, query string, args ...interface{}) (lastInser
 	debugf("#%d ExecInsert: %s %+v", queryCounter, query, args)
 	res, err = tx.Exec(query, args...)
 	if err != nil {
-		warningf("#%d ExecInsert failed: %s => %s %+v", queryCounter, err, query, args)
+		warnf("#%d ExecInsert failed: %s => %s %+v", queryCounter, err, query, args)
 		return 0, false
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		warningf("#%d ExecInsert failed: %s => %s %+v", queryCounter, err, query, args)
+		warnf("#%d ExecInsert failed: %s => %s %+v", queryCounter, err, query, args)
 	}
 	lastInsertId = id
 	debugf("#%d ExecInsert: insertId=%d", queryCounter, lastInsertId)
@@ -131,7 +108,7 @@ func QueryOne(tx AbstractDBBase, dest interface{}, query string, args ...interfa
 	err := tx.Get(dest, query, args...)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			warningf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
+			warnf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
 		}
 		debugf("#%d QueryOne: success=false", queryCounter)
 		return false
@@ -147,7 +124,7 @@ func QueryMany(tx AbstractDBBase, dest interface{}, query string, args ...interf
 	err := tx.Select(dest, query, args...)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			warningf("#%d QueryMany failed: %s => %s %+v", queryCounter, err, query, args)
+			warnf("#%d QueryMany failed: %s => %s %+v", queryCounter, err, query, args)
 		}
 		debugf("#%d QueryMany: success=false", queryCounter)
 		return false
@@ -164,7 +141,7 @@ func QueryOneToMap(tx AbstractDBBase, query string, args ...interface{}) (row Ro
 	defer result.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
-			warningf("#%d QueryOneToMap failed: %s => %s %+v", queryCounter, err, query, args)
+			warnf("#%d QueryOneToMap failed: %s => %s %+v", queryCounter, err, query, args)
 		}
 		debugf("#%d QueryOneToMap: success=false", queryCounter)
 		return nil, false
@@ -190,7 +167,7 @@ func QueryManyToMap(tx AbstractDBBase, query string, args ...interface{}) (rows 
 	defer result.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
-			warningf("#%d QueryManyToMap failed: %s => %s %+v", queryCounter, err, query, args)
+			warnf("#%d QueryManyToMap failed: %s => %s %+v", queryCounter, err, query, args)
 		}
 		debugf("#%d QueryManyToMap: success=false", queryCounter)
 		return nil, false
