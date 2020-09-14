@@ -159,24 +159,24 @@ func QueryMany(tx AbstractDBBase, dest interface{}, query string, args ...interf
 // 执行查询，有一行Map返回结果，所有字段值为[]byte或nil类型，可以转换为字符串
 func QueryOneToMap(tx AbstractDBBase, query string, args ...interface{}) (row Row, success bool) {
 	incrQueueCounter()
-	debugf("#%d QueryOne: %s %+v", queryCounter, query, args)
+	debugf("#%d QueryOneToMap: %s %+v", queryCounter, query, args)
 	result, err := tx.Queryx(query, args...)
 	defer result.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
-			warningf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
+			warningf("#%d QueryOneToMap failed: %s => %s %+v", queryCounter, err, query, args)
 		}
-		debugf("#%d QueryOne: success=false", queryCounter)
+		debugf("#%d QueryOneToMap: success=false", queryCounter)
 		return nil, false
 	}
 	if !result.Next() {
-		debugf("#%d QueryOne: success=false", queryCounter)
+		debugf("#%d QueryOneToMap: success=false", queryCounter)
 		return nil, false
 	}
-	debugf("#%d QueryOne: success=true", queryCounter)
+	debugf("#%d QueryOneToMap: success=true", queryCounter)
 	row = make(Row)
 	if err := result.MapScan(row); err != nil {
-		debugf("#%d QueryOne: success=false, %s", queryCounter, err)
+		debugf("#%d QueryOneToMap: success=false, %s", queryCounter, err)
 		return nil, false
 	}
 	return row, true
@@ -185,26 +185,26 @@ func QueryOneToMap(tx AbstractDBBase, query string, args ...interface{}) (row Ro
 // 执行查询，有多行Map返回结果，所有字段值为[]byte或nil类型，可以转换为字符串
 func QueryManyToMap(tx AbstractDBBase, query string, args ...interface{}) (rows []Row, success bool) {
 	incrQueueCounter()
-	debugf("#%d QueryOne: %s %+v", queryCounter, query, args)
+	debugf("#%d QueryManyToMap: %s %+v", queryCounter, query, args)
 	result, err := tx.Queryx(query, args...)
 	defer result.Close()
 	if err != nil {
 		if err != sql.ErrNoRows {
-			warningf("#%d QueryOne failed: %s => %s %+v", queryCounter, err, query, args)
+			warningf("#%d QueryManyToMap failed: %s => %s %+v", queryCounter, err, query, args)
 		}
-		debugf("#%d QueryOne: success=false", queryCounter)
+		debugf("#%d QueryManyToMap: success=false", queryCounter)
 		return nil, false
 	}
 	//if !result.Next() {
-	//	debugf("#%d QueryOne: success=false", queryCounter)
+	//	debugf("#%d QueryManyToMap: success=false", queryCounter)
 	//	return nil, false
 	//}
-	debugf("#%d QueryOne: success=true", queryCounter)
+	debugf("#%d QueryManyToMap: success=true", queryCounter)
 	rows = make([]Row, 0)
 	for result.Next() {
 		row := make(Row)
 		if err := result.MapScan(row); err != nil {
-			debugf("#%d QueryOne: success=false, %s", queryCounter, err)
+			debugf("#%d QueryManyToMap: success=false, %s", queryCounter, err)
 			return nil, false
 		}
 		rows = append(rows, row)
