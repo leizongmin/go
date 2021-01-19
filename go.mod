@@ -11,7 +11,7 @@ require (
 	github.com/json-iterator/go v1.1.10
 	github.com/lib/pq v1.9.0
 	github.com/sanity-io/litter v1.3.0
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/takama/daemon v1.0.0
 	go.uber.org/atomic v1.7.0
